@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+/* =====================================================================
+   Design tokens
+   A ledger, not a landing page: restrained neutrals, one accent, and
+   tabular figures everywhere money appears so columns line up.
+   ===================================================================== */
+
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --surface-2: #fafbfc;
+  --border: #e0e4e9;
+  --border-strong: #c8cfd8;
+  --ink: #101720;
+  --ink-2: #384451;
+  --muted: #66727f;
+  --accent: #15579b;
+  --accent-hover: #0f4880;
+  --accent-soft: #e8f0f9;
+  --pos: #0f6b45;
+  --pos-soft: #e6f4ed;
+  --neg: #a8291f;
+  --neg-soft: #fbeae8;
+  --warn: #8a5a00;
+  --warn-soft: #fdf3e2;
+  --ring: #15579b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --surface: #151b23;
+    --surface-2: #1b222b;
+    --border: #2a323d;
+    --border-strong: #3a444f;
+    --ink: #e8edf3;
+    --ink-2: #b9c3ce;
+    --muted: #8b97a4;
+    --accent: #5ea0e8;
+    --accent-hover: #7db4ee;
+    --accent-soft: #16273c;
+    --pos: #56c78e;
+    --pos-soft: #12281f;
+    --neg: #f0857a;
+    --neg-soft: #2c1917;
+    --warn: #e0b054;
+    --warn-soft: #2a2113;
+    --ring: #5ea0e8;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-pos: var(--pos);
+  --color-pos-soft: var(--pos-soft);
+  --color-neg: var(--neg);
+  --color-neg-soft: var(--neg-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Money and any figure that sits in a column. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* One visible focus treatment for the whole app. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Native controls follow the OS theme (date pickers, scrollbars). */
+:root {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Number inputs: hide spinners, they get in the way of fast entry. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,144 @@
+import "server-only";
+
+import { cache } from "react";
+
+import { getSupabase } from "@/lib/supabase";
+import { toNumber } from "@/lib/format";
+import type {
+  Advance,
+  DailyExpense,
+  DailyExpenseTotal,
+  ProgressBill,
+  ProjectFinancials,
+} from "@/lib/types";
+
+/**
+ * Every read in the app lives here.
+ *
+ * Rule enforced throughout: any query touching money is filtered by
+ * `project_id`. Nothing in this file can return rows from two projects at
+ * once, so the dashboard cannot accidentally mix projects together.
+ */
+
+/** PostgREST `or()` uses `,` and `()` as syntax — strip them from user input. */
+function sanitiseSearch(term: string): string {
+  return term.replace(/[,()*\\%]/g, " ").trim();
+}
+
+function normaliseFinancials(row: ProjectFinancials): ProjectFinancials {
+  return {
+    ...row,
+    contract_value: toNumber(row.contract_value),
+    total_expenses: toNumber(row.total_expenses),
+    expense_days: toNumber(row.expense_days),
+    total_advance_received: toNumber(row.total_advance_received),
+    remaining_advance: toNumber(row.remaining_advance),
+    total_billed: toNumber(row.total_billed),
+    total_billing_received: toNumber(row.total_billing_received),
+    outstanding_billing: toNumber(row.outstanding_billing),
+    bill_count: toNumber(row.bill_count),
+  };
+}
+
+/** All projects, newest first, with their headline figures. */
+export async function listProjects(search?: string): Promise<ProjectFinancials[]> {
+  let query = getSupabase()
+    .from("project_financials")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const term = sanitiseSearch(search ?? "");
+  if (term) {
+    query = query.or(
+      `project_name.ilike.%${term}%,` +
+        `client_name.ilike.%${term}%,` +
+        `location.ilike.%${term}%`,
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Could not load projects: ${error.message}`);
+  return (data ?? []).map(normaliseFinancials);
+}
+
+/**
+ * One project's full financial picture, or null if the id does not exist.
+ *
+ * Wrapped in React `cache` because the project layout and the page rendered
+ * inside it both need these figures — this way that costs one query, not two.
+ */
+export const getProjectFinancials = cache(
+  async (projectId: string): Promise<ProjectFinancials | null> => {
+    const { data, error } = await getSupabase()
+      .from("project_financials")
+      .select("*")
+      .eq("project_id", projectId)
+      .maybeSingle();
+
+    if (error) throw new Error(`Could not load project: ${error.message}`);
+    return data ? normaliseFinancials(data) : null;
+  },
+);
+
+/** The index of daily expense pages for one project, newest day first. */
+export async function listExpenseDays(
+  projectId: string,
+): Promise<DailyExpenseTotal[]> {
+  const { data, error } = await getSupabase()
+    .from("daily_expense_totals")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("expense_date", { ascending: false });
+
+  if (error) throw new Error(`Could not load expense days: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    ...row,
+    line_count: toNumber(row.line_count),
+    daily_total: toNumber(row.daily_total),
+  }));
+}
+
+/** Every material line on one day, for one project. */
+export async function listExpensesForDay(
+  projectId: string,
+  expenseDate: string,
+): Promise<DailyExpense[]> {
+  const { data, error } = await getSupabase()
+    .from("daily_expenses")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("expense_date", expenseDate)
+    .order("created_at", { ascending: true });
+
+  if (error) throw new Error(`Could not load expenses: ${error.message}`);
+  return (data ?? []).map((row) => ({ ...row, price: toNumber(row.price) }));
+}
+
+export async function listAdvances(projectId: string): Promise<Advance[]> {
+  const { data, error } = await getSupabase()
+    .from("advances")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("payment_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Could not load advances: ${error.message}`);
+  return (data ?? []).map((row) => ({ ...row, amount: toNumber(row.amount) }));
+}
+
+export async function listBills(projectId: string): Promise<ProgressBill[]> {
+  const { data, error } = await getSupabase()
+    .from("progress_bills")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("bill_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Could not load bills: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    ...row,
+    progress_percentage: toNumber(row.progress_percentage),
+    bill_amount: toNumber(row.bill_amount),
+    amount_received: toNumber(row.amount_received),
+  }));
+}
