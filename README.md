@@ -2,46 +2,51 @@
 
 Track expenses, advance payments and progress billing **separately for every
 project**. Built with Next.js 16 (App Router), TypeScript, Tailwind CSS 4 and
-Supabase/PostgreSQL.
+Supabase (Postgres + Auth).
+
+Sign-in is required. Every signed-in user shares the same projects
+("shared workspace"). There is no sign-up page — accounts are created in the
+Supabase dashboard.
 
 ---
 
 ## Getting started
 
-### 1. Add your Supabase credentials
+### 1. Environment
 
-Open **Supabase Dashboard → Project Settings → API Keys** and copy the values
-into `.env`:
+Open **Supabase Dashboard → Project Settings → API Keys** and copy into `.env`
+(it is gitignored — never commit it):
 
 ```env
-SUPABASE_URL=https://<your-project-ref>.supabase.co
-SUPABASE_SECRET_KEY=sb_secret_...
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-Both are server-side only. Neither carries the `NEXT_PUBLIC_` prefix, so
-Next.js will never inline them into the browser bundle.
+Both values are **public by design** — they are inlined into the browser
+bundle. There is no secret / service-role key: access control lives entirely
+in Supabase Auth + Row Level Security.
 
-> The publishable key is not used. Every database call happens on the server,
-> so the browser never talks to Supabase directly and never needs a key.
+### 2. Database — run two SQL files
 
-### 2. Create the tables
+In **SQL Editor → New query**, run each once:
 
-In Supabase open **SQL Editor → New query**, paste the whole of
-[`supabase/schema.sql`](supabase/schema.sql), and run it once. It creates the
-four tables, two aggregate views, indexes, triggers and the RLS lockdown.
+1. [`supabase/schema.sql`](supabase/schema.sql) — tables, views, indexes,
+   triggers, RLS enabled.
+2. [`supabase/auth-policies.sql`](supabase/auth-policies.sql) — grants the
+   `authenticated` role read/write; `anon` stays locked out.
 
-### 3. Verify, then run
+### 3. Create your login
+
+**Authentication → Users → Add user.** Tick **Auto Confirm User**. Repeat for
+each person who needs access. (No self-service sign-up by design.)
+
+### 4. Verify, then run
 
 ```bash
 npm install
-npm run check:supabase   # checks .env + that the schema is applied
-npm run dev              # http://localhost:3000
+npm run check:supabase   # reports which of the steps above is outstanding
+npm run dev              # http://localhost:3000  -> sign in at /login
 ```
-
-`check:supabase` reads `.env` directly and tells you exactly which piece is
-missing — bad URL, placeholder key, or un-applied schema — without needing the
-dev server. If the keys or schema are missing at runtime, the app also says so
-on screen instead of crashing.
 
 > **Editing `.env` while `npm run dev` is running does nothing.** Next.js reads
 > it only at startup — stop the server (Ctrl+C) and start it again.
@@ -72,19 +77,51 @@ lines still renders its dashboard from a single row.
 
 ## Security model
 
-There is no login in this app, because the brief did not ask for one. Rather
-than leave the database open, access is locked down like this:
+Layered, so a mistake in one layer is caught by the next.
 
-- RLS is **enabled** on all four tables, with **no policies** granted to `anon`
-  or `authenticated`, plus an explicit `revoke all`. The publishable key can
-  therefore read and write **nothing**, even if it leaks.
-- All access runs server-side with the secret key, which bypasses RLS.
-- [`src/lib/supabase.ts`](src/lib/supabase.ts) imports `server-only`, so
-  importing it from a Client Component is a **build error**, not a runtime
-  surprise. That is what keeps the secret key out of the browser bundle.
+**Authentication — [`src/proxy.ts`](src/proxy.ts).** Runs before every route.
+No valid Supabase session ⇒ redirect to `/login` (remembering `?next=`). A
+signed-in user hitting `/login` is sent home. `getUser()` there revalidates
+the token with Supabase, never trusting the cookie alone.
 
-If you later add user accounts, the change is additive: write RLS policies
-keyed on `auth.uid()` and move the reads to the publishable key.
+**Authorisation — [`supabase/auth-policies.sql`](supabase/auth-policies.sql).**
+RLS is on for every table. `authenticated` ⇒ full read/write (shared
+workspace); `anon` ⇒ nothing. These policies *are* the access control — there
+is no service-role key to bypass them. Every query runs as the signed-in user
+via `@supabase/ssr`.
+
+**Defence in depth.** [`requireUser()`](src/lib/auth.ts) is also called inside
+every function in `queries.ts`, every Server Action, and the project layout —
+so a route added later without a proxy match still is not open, and RLS behind
+it still returns nothing.
+
+**No secrets in the bundle.** The only env vars are the two public
+`NEXT_PUBLIC_` values. [`src/lib/supabase/server.ts`](src/lib/supabase/server.ts)
+imports `server-only`; the browser client uses the publishable key, which is
+meant to ship to the browser.
+
+**HTTP hardening — [`next.config.ts`](next.config.ts).** CSP, HSTS,
+`X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`,
+`Permissions-Policy`; `X-Powered-By` removed.
+
+**Server Actions — [`src/lib/actions.ts`](src/lib/actions.ts).** Each wrapped
+by `run()`: auth check first; unexpected Postgres errors are logged
+server-side and returned to the client as a generic sentence (never the raw
+DB error); string inputs are length-capped; ids are UUID-validated.
+`/auth/signout` is POST + same-origin only.
+
+### Moving to per-user data later
+
+Add `owner_id uuid references auth.users default auth.uid()` to `projects`,
+backfill it, then change the policies in `auth-policies.sql` from
+`using (true)` to `using (owner_id = auth.uid())`. No app-code change needed —
+the queries already run as the user.
+
+### Enabling self-service sign-up later
+
+Build a `/signup` page that calls `supabase.auth.signUp`, add `/signup` to
+`PUBLIC_PATHS` in [`src/lib/supabase/proxy.ts`](src/lib/supabase/proxy.ts),
+and consider gating it behind an invite code.
 
 ---
 
@@ -165,28 +202,30 @@ correctable. Every delete asks for confirmation inline first.
 
 ```
 src/
+  proxy.ts                          auth gate + session refresh (Next 16)
   app/
-    layout.tsx                      header, logo, skip link, theme
+    layout.tsx                      <AppHeader/> + shell
+    login/page.tsx                  sign-in
+    auth/signout/route.ts           POST-only sign-out
     page.tsx                        homepage: search + project list
     projects/new/page.tsx           create form
-    projects/[id]/
-      layout.tsx                    project header + section tabs
-      page.tsx                      dashboard
-      expenses/page.tsx             day index
-      expenses/[date]/page.tsx      one day
-      advances/page.tsx
-      billing/page.tsx
-      reports/page.tsx
+    projects/[id]/                  layout + dashboard/expenses/advances/billing/reports
   components/                       UI, split client/server
   lib/
-    supabase.ts                     server-only client
-    queries.ts                      all reads, always project-scoped
-    actions.ts                      all writes, always project-scoped ("use server")
+    auth.ts                         getUser / requireUser / requireUserInAction
+    supabase/
+      env.ts                        the two public env vars
+      server.ts                     request-scoped, RLS-bound (server-only)
+      client.ts                     browser client (login form only)
+      proxy.ts                      updateSession() used by src/proxy.ts
+    queries.ts                      all reads  — auth-checked, project-scoped
+    actions.ts                      all writes — auth-checked, "use server"
     action-state.ts                 ActionState / idleState (see below)
     types.ts                        row types + Database generic
     format.ts                       money and date formatting
 scripts/check-supabase.mjs          `npm run check:supabase`
-supabase/schema.sql                 run this once
+supabase/schema.sql                 tables + views (run once)
+supabase/auth-policies.sql          grants + RLS policies (run once)
 ```
 
 Database logic lives entirely in `src/lib/`. Components receive plain data and
