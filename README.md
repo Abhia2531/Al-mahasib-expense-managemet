@@ -129,14 +129,20 @@ and consider gating it behind an invite code.
 
 | Route | What it does |
 | --- | --- |
-| `/` | Logo, New Project button, searchable list of all projects |
+| `/` | Construction-themed header, cross-project totals, searchable project list with **Edit** / **Delete** per row |
 | `/projects/new` | Create form; opens the new project's dashboard on save |
+| `/projects/[id]/edit` | Edit the project's own details (same form as New; not transactions) |
 | `/projects/[id]` | Dashboard — all figures for that project only |
-| `/projects/[id]/expenses` | Index of daily expense pages, newest first |
+| `/projects/[id]/expenses` | Day index **plus a project-wide item search** (`?find=`) — item, date, amount |
 | `/projects/[id]/expenses/[date]` | **One day's page**: Material \| Price + Daily Total |
 | `/projects/[id]/advances` | Record and list advance payments |
 | `/projects/[id]/billing` | Progress bills: raise, edit, delete |
-| `/projects/[id]/reports` | Full financial summary + per-day, per-advance, per-bill breakdowns |
+| `/projects/[id]/reports` | The **A4 print / Save-as-PDF report** — details, summary, full line-item expense history, advances, bills |
+
+**Delete Project** opens a confirmation modal that names what will be removed
+and requires typing the project name — one mis-click cannot do it. Foreign
+keys cascade, so a deleted project takes its expenses, advances and bills with
+it.
 
 A day's page exists as soon as you navigate to its date — there is nothing to
 "create" first. `‹ Previous` / `Today` / `Next ›` move between days, and the

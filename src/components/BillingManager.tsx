@@ -22,9 +22,9 @@ import {
 } from "@/components/ui";
 import type { BillStatus, ProgressBill } from "@/lib/types";
 
-const statusTone: Record<BillStatus, "warn" | "accent" | "pos"> = {
+const statusTone: Record<BillStatus, "warn" | "steel" | "pos"> = {
   pending: "warn",
-  partially_paid: "accent",
+  partially_paid: "steel",
   paid: "pos",
 };
 
@@ -152,7 +152,7 @@ function BillCard({
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-0.5">
+        <div className="flex shrink-0 items-center gap-1">
           {confirming ? (
             <form action={handleDelete} className="flex items-center gap-1">
               <input type="hidden" name="id" value={bill.id} />
@@ -177,18 +177,16 @@ function BillCard({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                aria-label={`Edit bill ${bill.bill_number}`}
-                className="grid h-7 w-7 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-ink"
+                className={`${btn.base} ${btn.ghost} ${btn.sm}`}
               >
-                <Icon size={14} path={<path d="M11 2.5 13.5 5 5 13.5H2.5V11z" />} />
+                Edit
               </button>
               <button
                 type="button"
                 onClick={() => setConfirming(true)}
-                aria-label={`Delete bill ${bill.bill_number}`}
-                className="grid h-7 w-7 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-neg"
+                className={`${btn.base} ${btn.danger} ${btn.sm}`}
               >
-                <Icon size={14} path={icons.trash} />
+                Delete
               </button>
             </>
           )}

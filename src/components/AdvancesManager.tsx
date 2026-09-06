@@ -5,7 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { addAdvanceAction, deleteAdvanceAction } from "@/lib/actions";
 import { idleState } from "@/lib/action-state";
 import { formatDate, formatMoney } from "@/lib/format";
-import { btn, Card, ErrorNote, Field, Icon, icons, input } from "@/components/ui";
+import { btn, Card, ErrorNote, Field, input } from "@/components/ui";
 import type { Advance } from "@/lib/types";
 
 export function AdvancesManager({
@@ -119,10 +119,9 @@ function AdvanceRow({
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              aria-label={`Delete advance of ${formatMoney(advance.amount)}`}
-              className="grid h-7 w-7 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-neg"
+              className={`${btn.base} ${btn.danger} ${btn.sm}`}
             >
-              <Icon size={14} path={icons.trash} />
+              Delete
             </button>
           )}
         </div>

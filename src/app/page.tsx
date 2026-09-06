@@ -6,22 +6,24 @@ import { listProjects } from "@/lib/queries";
 import { formatDate, formatMoneyCompact } from "@/lib/format";
 import { ProjectSearch } from "@/components/ProjectSearch";
 import { SetupNotice } from "@/components/SetupNotice";
+import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import {
   Badge,
   btn,
   EmptyState,
   Icon,
   icons,
-  PageHeader,
+  Note,
 } from "@/components/ui";
+import { DashboardHero } from "@/components/DashboardHero";
 import type { ProjectFinancials } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   const params = await searchParams;
-  const raw = params?.q;
-  const search = typeof raw === "string" ? raw : "";
+  const search = typeof params?.q === "string" ? params.q : "";
+  const justDeleted = params?.deleted === "1";
 
   let projects: ProjectFinancials[] = [];
   let loadError: string | null = null;
@@ -33,29 +35,34 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     loadError = error instanceof Error ? error.message : String(error);
   }
 
+  const totals = summarise(projects);
+
   return (
-    <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-6 sm:py-10">
-      <PageHeader
-        title="Projects"
-        lead="Every expense, advance and bill is scoped to one project."
-        actions={
-          <Link href="/projects/new" className={`${btn.base} ${btn.primary} ${btn.lg}`}>
-            <Icon path={icons.plus} size={15} />
-            New project
-          </Link>
-        }
+    <div className="mx-auto max-w-[1100px] px-4 py-7 sm:px-6 sm:py-9">
+      <DashboardHero
+        projectCount={projects.length}
+        totalRemaining={totals.remaining}
+        totalOutstanding={totals.outstanding}
+        hasSearch={Boolean(search)}
+        errored={Boolean(loadError)}
       />
 
       {loadError ? (
         <SetupNotice detail={loadError} />
       ) : (
         <>
+          {justDeleted ? (
+            <div className="mb-4">
+              <Note tone="pos">Project deleted.</Note>
+            </div>
+          ) : null}
+
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <Suspense fallback={<div className="h-9 w-full sm:max-w-xs" />}>
+            <Suspense fallback={<div className="h-10 w-full sm:max-w-sm" />}>
               <ProjectSearch initial={search} />
             </Suspense>
             {projects.length > 0 ? (
-              <p className="tnum text-[12.5px] text-muted">
+              <p className="tnum text-[13px] text-muted">
                 {projects.length} {projects.length === 1 ? "project" : "projects"}
                 {search ? " matched" : ""}
               </p>
@@ -81,16 +88,20 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
                       href="/projects/new"
                       className={`${btn.base} ${btn.primary}`}
                     >
-                      Create a project
+                      <Icon path={icons.plus} size={16} />
+                      New project
                     </Link>
                   )
                 }
               />
             </div>
           ) : (
-            <ul className="overflow-hidden rounded-lg border border-border bg-surface">
+            <ul className="overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]">
               {projects.map((project) => (
-                <li key={project.project_id} className="border-t border-border first:border-t-0">
+                <li
+                  key={project.project_id}
+                  className="border-t border-border first:border-t-0"
+                >
                   <ProjectRow project={project} />
                 </li>
               ))}
@@ -113,23 +124,23 @@ function ProjectRow({ project }: { project: ProjectFinancials }) {
   ].filter(Boolean);
 
   return (
-    <Link
-      href={`/projects/${project.project_id}`}
-      className="group flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-surface-2"
-    >
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-[14px] font-medium text-ink">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3.5 transition-colors hover:bg-surface-2">
+      <div className="min-w-[12rem] flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/projects/${project.project_id}`}
+            className="text-[15px] font-semibold text-ink underline-offset-2 hover:text-brand hover:underline"
+          >
             {project.project_name}
-          </span>
+          </Link>
           {overspent ? <Badge tone="neg">Over advance</Badge> : null}
         </div>
-        <p className="mt-0.5 truncate text-[12px] text-muted">
+        <p className="mt-0.5 truncate text-[12.5px] text-muted">
           {meta.join("  ·  ")}
         </p>
       </div>
 
-      <dl className="hidden shrink-0 items-baseline gap-6 sm:flex">
+      <dl className="flex shrink-0 items-baseline gap-5 sm:gap-7">
         <RowFigure
           label="Remaining"
           value={formatMoneyCompact(project.remaining_advance)}
@@ -146,10 +157,29 @@ function ProjectRow({ project }: { project: ProjectFinancials }) {
         />
       </dl>
 
-      <span className="shrink-0 text-faint transition-colors group-hover:text-ink-2">
-        <Icon path={icons.chevronRight} size={15} />
-      </span>
-    </Link>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <Link
+          href={`/projects/${project.project_id}/edit`}
+          className={`${btn.base} ${btn.secondary} ${btn.sm}`}
+        >
+          <Icon path={icons.edit} size={13} />
+          Edit
+        </Link>
+        <DeleteProjectDialog
+          projectId={project.project_id}
+          projectName={project.project_name}
+          triggerClassName={`${btn.base} ${btn.danger} ${btn.sm}`}
+          triggerLabel="Delete"
+        />
+        <Link
+          href={`/projects/${project.project_id}`}
+          aria-label={`Open ${project.project_name}`}
+          className="grid h-8 w-8 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-ink"
+        >
+          <Icon path={icons.chevronRight} size={15} />
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -170,12 +200,22 @@ function RowFigure({
   }[tone];
   return (
     <div className="text-right">
-      <dt className="text-[10.5px] font-medium uppercase tracking-[0.05em] text-faint">
+      <dt className="text-[10.5px] font-semibold uppercase tracking-[0.05em] text-faint">
         {label}
       </dt>
       <dd className={`tnum mt-0.5 text-[13px] font-semibold ${toneClass}`}>
         {value}
       </dd>
     </div>
+  );
+}
+
+function summarise(projects: ProjectFinancials[]) {
+  return projects.reduce(
+    (acc, p) => ({
+      remaining: acc.remaining + p.remaining_advance,
+      outstanding: acc.outstanding + p.outstanding_billing,
+    }),
+    { remaining: 0, outstanding: 0 },
   );
 }

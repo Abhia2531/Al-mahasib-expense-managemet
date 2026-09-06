@@ -16,12 +16,15 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { href: `${base}/expenses`, label: "Daily expenses" },
     { href: `${base}/advances`, label: "Advances" },
     { href: `${base}/billing`, label: "Billing" },
-    { href: `${base}/reports`, label: "Reports" },
+    { href: `${base}/reports`, label: "Report" },
   ];
 
   return (
-    <nav aria-label="Project sections" className="-mb-px overflow-x-auto">
-      <ul className="flex min-w-max gap-5">
+    <nav
+      aria-label="Project sections"
+      className="overflow-x-auto border-b border-border"
+    >
+      <ul className="flex min-w-max gap-6">
         {tabs.map((tab) => {
           const active =
             tab.href === base
@@ -34,10 +37,10 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={
-                  "inline-block whitespace-nowrap border-b-[1.5px] py-2.5 text-[13px] font-medium transition-colors " +
+                  "relative inline-block whitespace-nowrap py-2.5 text-[13.5px] font-medium transition-colors " +
                   (active
-                    ? "border-ink text-ink"
-                    : "border-transparent text-muted hover:text-ink")
+                    ? "text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-[2px] after:bg-brand"
+                    : "text-muted hover:text-ink")
                 }
               >
                 {tab.label}

@@ -1,327 +1,425 @@
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import type { Metadata } from "next";
 
 import {
   getProjectFinancials,
   listAdvances,
+  listAllExpenses,
   listBills,
-  listExpenseDays,
 } from "@/lib/queries";
-import { BILL_STATUS_LABELS, formatDate, formatMoney } from "@/lib/format";
-import { Badge, SectionHeading } from "@/components/ui";
+import {
+  BILL_STATUS_LABELS,
+  extractQuantity,
+  formatDate,
+  formatDateLong,
+  formatMoney,
+  todayISO,
+} from "@/lib/format";
+import { PrintButton } from "@/components/PrintButton";
+import { Note } from "@/components/ui";
+import { SetupNotice } from "@/components/SetupNotice";
+import type { DailyExpense } from "@/lib/types";
 
-export const metadata: Metadata = { title: "Reports" };
+export const metadata: Metadata = { title: "Report" };
 
-const headCell =
-  "px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.05em] text-faint";
-const cell = "px-3 py-2.5 text-[13px] text-ink";
-const footRow = "border-t-2 border-border-strong";
-
-export default async function ReportsPage({
+export default async function ReportPage({
   params,
 }: PageProps<"/projects/[id]/reports">) {
   const { id } = await params;
 
-  const [project, days, advances, bills] = await Promise.all([
-    getProjectFinancials(id),
-    listExpenseDays(id),
-    listAdvances(id),
-    listBills(id),
-  ]);
+  let project, expenses, advances, bills;
+  try {
+    [project, expenses, advances, bills] = await Promise.all([
+      getProjectFinancials(id),
+      listAllExpenses(id),
+      listAdvances(id),
+      listBills(id),
+    ]);
+  } catch (error) {
+    unstable_rethrow(error);
+    return (
+      <SetupNotice
+        detail={error instanceof Error ? error.message : String(error)}
+      />
+    );
+  }
   if (!project) notFound();
 
+  const byDay = groupByDay(expenses);
+  const today = todayISO();
+  const empty =
+    byDay.length === 0 && advances.length === 0 && bills.length === 0;
+
   return (
-    <div className="space-y-8">
-      <SectionHeading
-        title="Financial summary"
-        description={`Every figure counts only records belonging to ${project.project_name}.`}
-      />
-
-      {/* ---- Summary --------------------------------------------- */}
-      <div className="overflow-hidden rounded-lg border border-border bg-surface">
-        <table className="w-full">
-          <tbody>
-            <SummaryRow label="Project value" value={project.contract_value} first />
-
-            <SummaryGroup label="Expenses" />
-            <SummaryRow
-              label="Total project expenses"
-              value={project.total_expenses}
-              note={`${days.length} ${days.length === 1 ? "day" : "days"} recorded`}
-            />
-
-            <SummaryGroup label="Advance" />
-            <SummaryRow
-              label="Total advance received"
-              value={project.total_advance_received}
-              note={`${advances.length} ${advances.length === 1 ? "payment" : "payments"}`}
-            />
-            <SummaryRow
-              label="Remaining advance"
-              value={project.remaining_advance}
-              note="advance received − project expenses"
-              tone={project.remaining_advance < 0 ? "neg" : "pos"}
-              strong
-            />
-
-            <SummaryGroup label="Billing" />
-            <SummaryRow
-              label="Total billed"
-              value={project.total_billed}
-              note={`${bills.length} ${bills.length === 1 ? "bill" : "bills"}`}
-            />
-            <SummaryRow
-              label="Total billing received"
-              value={project.total_billing_received}
-            />
-            <SummaryRow
-              label="Outstanding billing"
-              value={project.outstanding_billing}
-              note="total billed − total billing received"
-              tone={project.outstanding_billing > 0 ? "warn" : "neutral"}
-              strong
-            />
-          </tbody>
-        </table>
+    <div className="space-y-4">
+      <div
+        className="flex flex-wrap items-center justify-between gap-3"
+        data-noprint
+      >
+        <div>
+          <h2 className="text-[16px] font-semibold text-ink">Project report</h2>
+          <p className="mt-0.5 text-sm text-muted">
+            A4-formatted. Use Print / Save as PDF and choose A4 — the app menus
+            are left out automatically.
+          </p>
+        </div>
+        <PrintButton />
       </div>
 
-      {/* ---- Expenses by day ----------------------------------- */}
-      <ReportSection title="Expenses by day">
-        {days.length === 0 ? (
-          <EmptyRow>No expenses recorded.</EmptyRow>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th scope="col" className={headCell}>Date</th>
-                <th scope="col" className={headCell}>Items</th>
-                <th scope="col" className={`${headCell} text-right`}>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {days.map((day) => (
-                <tr key={day.expense_date} className="border-t border-border">
-                  <td className={cell}>{formatDate(day.expense_date)}</td>
-                  <td className={`${cell} tnum text-muted`}>{day.line_count}</td>
-                  <td className={`${cell} tnum text-right font-medium`}>
-                    {formatMoney(day.daily_total)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className={footRow}>
-                <th scope="row" colSpan={2} className="px-3 py-3 text-left text-[13px] font-semibold text-ink">
-                  Total project expenses
-                </th>
-                <td className="tnum px-3 py-3 text-right text-[14px] font-bold text-ink">
-                  {formatMoney(project.total_expenses)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        )}
-      </ReportSection>
+      {empty ? (
+        <Note tone="steel">
+          Nothing has been recorded for this project yet, so the report shows
+          the project details and zero totals only.
+        </Note>
+      ) : null}
 
-      {/* ---- Advances ----------------------------------------- */}
-      <ReportSection title="Advance payments">
-        {advances.length === 0 ? (
-          <EmptyRow>No advance payments recorded.</EmptyRow>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th scope="col" className={headCell}>Date</th>
-                <th scope="col" className={headCell}>Notes</th>
-                <th scope="col" className={`${headCell} text-right`}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {advances.map((advance) => (
-                <tr key={advance.id} className="border-t border-border">
-                  <td className={`${cell} whitespace-nowrap`}>
-                    {formatDate(advance.payment_date)}
-                  </td>
-                  <td className={`${cell} text-muted`}>{advance.notes || "—"}</td>
-                  <td className={`${cell} tnum text-right font-medium`}>
-                    {formatMoney(advance.amount)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className={footRow}>
-                <th scope="row" colSpan={2} className="px-3 py-3 text-left text-[13px] font-semibold text-ink">
-                  Total advance received
-                </th>
-                <td className="tnum px-3 py-3 text-right text-[14px] font-bold text-ink">
-                  {formatMoney(project.total_advance_received)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        )}
-      </ReportSection>
+      <article className="print-sheet mx-auto max-w-3xl rounded-lg border border-border bg-white p-6 text-[13px] leading-relaxed text-ink shadow-[var(--shadow-sm)] sm:p-8">
+        <header className="flex items-start justify-between gap-6 border-b-2 border-ink pb-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+              Al Mahasib
+            </p>
+            <h1 className="mt-1 text-[22px] font-bold tracking-[-0.01em] text-ink">
+              Project report
+            </h1>
+          </div>
+          <div className="text-right text-[11px] text-muted">
+            <p>Generated</p>
+            <p className="font-medium text-ink">{formatDateLong(today)}</p>
+          </div>
+        </header>
 
-      {/* ---- Bills -------------------------------------------- */}
-      <ReportSection title="Progress bills" scroll>
-        {bills.length === 0 ? (
-          <EmptyRow>No progress bills recorded.</EmptyRow>
-        ) : (
-          <table className="w-full min-w-[620px]">
-            <thead>
-              <tr className="border-b border-border">
-                <th scope="col" className={headCell}>Bill</th>
-                <th scope="col" className={headCell}>Date</th>
-                <th scope="col" className={headCell}>Status</th>
-                <th scope="col" className={`${headCell} text-right`}>Billed</th>
-                <th scope="col" className={`${headCell} text-right`}>Received</th>
-                <th scope="col" className={`${headCell} text-right`}>Outstanding</th>
-              </tr>
-            </thead>
+        <section className="mt-5">
+          <h2 className="text-[16px] font-bold text-ink">
+            {project.project_name}
+          </h2>
+          <dl className="mt-2 grid grid-cols-1 gap-x-8 gap-y-1.5 text-[12.5px] sm:grid-cols-2">
+            <Detail label="Client" value={project.client_name || "—"} />
+            <Detail label="Location" value={project.location || "—"} />
+            <Detail
+              label="Start date"
+              value={project.start_date ? formatDate(project.start_date) : "—"}
+            />
+            <Detail
+              label="Project value"
+              value={formatMoney(project.contract_value)}
+              strong
+            />
+          </dl>
+          {project.description ? (
+            <p className="mt-3 whitespace-pre-wrap border-l-2 border-border-strong pl-3 text-[12px] text-ink-2">
+              {project.description}
+            </p>
+          ) : null}
+        </section>
+
+        <section className="mt-6">
+          <SheetHeading>Financial summary</SheetHeading>
+          <table className="mt-2 w-full border-collapse text-[12.5px]">
             <tbody>
-              {bills.map((bill) => (
-                <tr key={bill.id} className="border-t border-border">
-                  <td className={`${cell} font-medium`}>{bill.bill_number}</td>
-                  <td className={`${cell} whitespace-nowrap text-muted`}>
-                    {formatDate(bill.bill_date)}
-                  </td>
-                  <td className={cell}>
-                    <Badge
-                      tone={
-                        bill.status === "paid"
-                          ? "pos"
-                          : bill.status === "partially_paid"
-                            ? "accent"
-                            : "warn"
-                      }
-                    >
-                      {BILL_STATUS_LABELS[bill.status]}
-                    </Badge>
-                  </td>
-                  <td className={`${cell} tnum text-right`}>
-                    {formatMoney(bill.bill_amount)}
-                  </td>
-                  <td className={`${cell} tnum text-right text-pos`}>
-                    {formatMoney(bill.amount_received)}
-                  </td>
-                  <td className={`${cell} tnum text-right font-medium`}>
-                    {formatMoney(bill.bill_amount - bill.amount_received)}
+              <SumRow label="Project value" value={project.contract_value} />
+              <SumRow
+                label="Total expenses"
+                value={project.total_expenses}
+                note={`${project.expense_days} ${
+                  project.expense_days === 1 ? "day" : "days"
+                }`}
+              />
+              <SumRow
+                label="Total advance received"
+                value={project.total_advance_received}
+                note={`${advances.length} ${
+                  advances.length === 1 ? "payment" : "payments"
+                }`}
+              />
+              <SumRow
+                label="Remaining amount  (advance − expenses)"
+                value={project.remaining_advance}
+                strong
+              />
+              <SumRow label="Total billed" value={project.total_billed} />
+              <SumRow
+                label="Billing received"
+                value={project.total_billing_received}
+              />
+              <SumRow
+                label="Outstanding amount  (billed − received)"
+                value={project.outstanding_billing}
+                strong
+              />
+            </tbody>
+          </table>
+        </section>
+
+        <section className="mt-6">
+          <SheetHeading>
+            Expense &amp; purchase history
+            <span className="ml-2 font-normal text-muted">
+              ({expenses.length} {expenses.length === 1 ? "line" : "lines"})
+            </span>
+          </SheetHeading>
+          {byDay.length === 0 ? (
+            <p className="mt-2 text-[12px] text-muted">
+              No expenses recorded for this project.
+            </p>
+          ) : (
+            <table className="mt-2 w-full border-collapse text-[12px]">
+              <thead>
+                <tr className="border-y border-ink text-left">
+                  <th className="w-24 py-1.5 pr-2 font-semibold">Date</th>
+                  <th className="py-1.5 pr-2 font-semibold">Item / material</th>
+                  <th className="w-24 py-1.5 pr-2 font-semibold">Quantity</th>
+                  <th className="w-28 py-1.5 text-right font-semibold">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {byDay.map((day) => (
+                  <DayBlock key={day.date} date={day.date} rows={day.rows} />
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-ink">
+                  <th colSpan={3} className="py-2 text-left font-bold">
+                    Total project expenses
+                  </th>
+                  <td className="tnum py-2 text-right font-bold">
+                    {formatMoney(project.total_expenses)}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className={footRow}>
-                <th scope="row" colSpan={3} className="px-3 py-3 text-left text-[13px] font-semibold text-ink">
-                  Totals
-                </th>
-                <td className="tnum px-3 py-3 text-right text-[13px] font-bold text-ink">
-                  {formatMoney(project.total_billed)}
-                </td>
-                <td className="tnum px-3 py-3 text-right text-[13px] font-bold text-ink">
-                  {formatMoney(project.total_billing_received)}
-                </td>
-                <td className="tnum px-3 py-3 text-right text-[13px] font-bold text-ink">
-                  {formatMoney(project.outstanding_billing)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        )}
-      </ReportSection>
+              </tfoot>
+            </table>
+          )}
+        </section>
+
+        <section className="mt-6">
+          <SheetHeading>Advance payments</SheetHeading>
+          {advances.length === 0 ? (
+            <p className="mt-2 text-[12px] text-muted">
+              No advance payments recorded.
+            </p>
+          ) : (
+            <table className="mt-2 w-full border-collapse text-[12px]">
+              <thead>
+                <tr className="border-y border-ink text-left">
+                  <th className="w-24 py-1.5 pr-2 font-semibold">Date</th>
+                  <th className="py-1.5 pr-2 font-semibold">Notes</th>
+                  <th className="w-28 py-1.5 text-right font-semibold">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {advances.map((a) => (
+                  <tr key={a.id} className="border-b border-border align-top">
+                    <td className="tnum py-1.5 pr-2">
+                      {formatDate(a.payment_date)}
+                    </td>
+                    <td className="py-1.5 pr-2">{a.notes || "—"}</td>
+                    <td className="tnum py-1.5 text-right">
+                      {formatMoney(a.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-ink">
+                  <th colSpan={2} className="py-2 text-left font-bold">
+                    Total advance received
+                  </th>
+                  <td className="tnum py-2 text-right font-bold">
+                    {formatMoney(project.total_advance_received)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+        </section>
+
+        <section className="mt-6">
+          <SheetHeading>Progress billing</SheetHeading>
+          {bills.length === 0 ? (
+            <p className="mt-2 text-[12px] text-muted">
+              No progress bills recorded.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="mt-2 w-full min-w-[560px] border-collapse text-[12px]">
+                <thead>
+                  <tr className="border-y border-ink text-left">
+                    <th className="py-1.5 pr-2 font-semibold">Bill</th>
+                    <th className="w-20 py-1.5 pr-2 font-semibold">Date</th>
+                    <th className="w-24 py-1.5 pr-2 font-semibold">Status</th>
+                    <th className="w-24 py-1.5 pr-2 text-right font-semibold">
+                      Billed
+                    </th>
+                    <th className="w-24 py-1.5 pr-2 text-right font-semibold">
+                      Received
+                    </th>
+                    <th className="w-24 py-1.5 text-right font-semibold">
+                      Outstanding
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bills.map((b) => (
+                    <tr key={b.id} className="border-b border-border align-top">
+                      <td className="py-1.5 pr-2">
+                        <span className="font-medium">{b.bill_number}</span>
+                        {b.work_description ? (
+                          <span className="block text-[11px] text-muted">
+                            {b.work_description}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="tnum py-1.5 pr-2">
+                        {formatDate(b.bill_date)}
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        {BILL_STATUS_LABELS[b.status]}
+                      </td>
+                      <td className="tnum py-1.5 pr-2 text-right">
+                        {formatMoney(b.bill_amount)}
+                      </td>
+                      <td className="tnum py-1.5 pr-2 text-right">
+                        {formatMoney(b.amount_received)}
+                      </td>
+                      <td className="tnum py-1.5 text-right">
+                        {formatMoney(b.bill_amount - b.amount_received)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-ink">
+                    <th colSpan={3} className="py-2 text-left font-bold">
+                      Totals
+                    </th>
+                    <td className="tnum py-2 pr-2 text-right font-bold">
+                      {formatMoney(project.total_billed)}
+                    </td>
+                    <td className="tnum py-2 pr-2 text-right font-bold">
+                      {formatMoney(project.total_billing_received)}
+                    </td>
+                    <td className="tnum py-2 text-right font-bold">
+                      {formatMoney(project.outstanding_billing)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <footer className="mt-8 border-t border-border-strong pt-3 text-[10.5px] text-muted">
+          Al Mahasib — construction project finance · {project.project_name} ·
+          report generated {formatDate(today)}
+        </footer>
+      </article>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
 
-function ReportSection({
-  title,
-  children,
-  scroll = false,
+function Detail({
+  label,
+  value,
+  strong,
 }: {
-  title: string;
-  children: React.ReactNode;
-  scroll?: boolean;
+  label: string;
+  value: string;
+  strong?: boolean;
 }) {
   return (
-    <section className="space-y-2.5">
-      <h3 className="text-[14px] font-semibold text-ink">{title}</h3>
-      <div
-        className={`rounded-lg border border-border bg-surface ${
-          scroll ? "overflow-x-auto" : "overflow-hidden"
+    <div className="flex justify-between gap-4">
+      <dt className="text-muted">{label}</dt>
+      <dd
+        className={`tnum text-right text-ink ${
+          strong ? "font-bold" : "font-medium"
         }`}
       >
-        {children}
-      </div>
-    </section>
+        {value}
+      </dd>
+    </div>
   );
 }
 
-function EmptyRow({ children }: { children: React.ReactNode }) {
+function SheetHeading({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-4 py-8 text-center text-[13px] text-muted">{children}</p>
+    <h3 className="border-b border-border-strong pb-1 text-[13px] font-bold uppercase tracking-[0.04em] text-ink">
+      {children}
+    </h3>
   );
 }
 
-function SummaryGroup({ label }: { label: string }) {
-  return (
-    <tr className="border-t border-border">
-      <th
-        scope="colgroup"
-        colSpan={2}
-        className="px-3 pb-1 pt-4 text-left text-[10.5px] font-semibold uppercase tracking-[0.06em] text-faint"
-      >
-        {label}
-      </th>
-    </tr>
-  );
-}
-
-function SummaryRow({
+function SumRow({
   label,
   value,
   note,
-  tone = "neutral",
-  strong = false,
-  first = false,
+  strong,
 }: {
   label: string;
   value: number;
   note?: string;
-  tone?: "neutral" | "pos" | "neg" | "warn";
   strong?: boolean;
-  first?: boolean;
 }) {
-  const toneClass = {
-    neutral: "text-ink",
-    pos: "text-pos",
-    neg: "text-neg",
-    warn: "text-warn",
-  }[tone];
-
   return (
-    <tr className={first ? "" : "border-t border-border"}>
-      <th scope="row" className="px-3 py-2.5 text-left align-top font-normal">
-        <span
-          className={`text-[13px] ${
-            strong ? "font-semibold text-ink" : "text-ink-2"
-          }`}
-        >
-          {label}
-        </span>
+    <tr className={strong ? "border-y border-ink" : "border-b border-border"}>
+      <th
+        scope="row"
+        className={`py-1.5 text-left font-normal ${
+          strong ? "font-bold text-ink" : "text-ink-2"
+        }`}
+      >
+        {label}
         {note ? (
-          <span className="mt-0.5 block text-[11.5px] text-muted">{note}</span>
+          <span className="ml-2 text-[11px] text-muted">{note}</span>
         ) : null}
       </th>
       <td
-        className={`tnum px-3 py-2.5 text-right align-top ${toneClass} ${
-          strong ? "text-[14px] font-bold" : "text-[13px] font-medium"
+        className={`tnum py-1.5 text-right ${
+          strong ? "text-[13px] font-bold" : "font-medium"
         }`}
       >
         {formatMoney(value)}
       </td>
     </tr>
   );
+}
+
+function DayBlock({ date, rows }: { date: string; rows: DailyExpense[] }) {
+  const subtotal = rows.reduce((sum, r) => sum + r.price, 0);
+  return (
+    <>
+      {rows.map((row, i) => (
+        <tr key={row.id} className="border-b border-border align-top">
+          <td className="tnum py-1.5 pr-2">{i === 0 ? formatDate(date) : ""}</td>
+          <td className="py-1.5 pr-2">{row.material}</td>
+          <td className="tnum py-1.5 pr-2 text-muted">
+            {extractQuantity(row.material) || "—"}
+          </td>
+          <td className="tnum py-1.5 text-right">{formatMoney(row.price)}</td>
+        </tr>
+      ))}
+      <tr className="border-b border-border-strong">
+        <td />
+        <td colSpan={2} className="py-1 pr-2 text-right text-[11px] text-muted">
+          Day total
+        </td>
+        <td className="tnum py-1 text-right text-[11px] font-semibold">
+          {formatMoney(subtotal)}
+        </td>
+      </tr>
+    </>
+  );
+}
+
+function groupByDay(
+  expenses: DailyExpense[],
+): { date: string; rows: DailyExpense[] }[] {
+  const map = new Map<string, DailyExpense[]>();
+  for (const e of [...expenses].reverse()) {
+    const arr = map.get(e.expense_date) ?? [];
+    arr.push(e);
+    map.set(e.expense_date, arr);
+  }
+  return [...map.entries()].map(([date, rows]) => ({ date, rows }));
 }

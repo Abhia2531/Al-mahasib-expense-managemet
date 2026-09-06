@@ -42,7 +42,7 @@ export function ExpenseDayTable({
             <th scope="col" className="w-40 px-4 py-2 text-right font-medium">
               Price
             </th>
-            <th scope="col" className="w-20 px-2 py-2">
+            <th scope="col" className="w-[8.5rem] px-2 py-2">
               <span className="sr-only">Actions</span>
             </th>
           </tr>
@@ -190,7 +190,7 @@ function ExpenseRow({
         {formatMoney(row.price)}
       </td>
       <td className="px-2 py-1.5">
-        <div className="flex items-center justify-end gap-0.5">
+        <div className="flex items-center justify-end gap-1">
           {confirmingDelete ? (
             <form
               action={(formData) => runAction(deleteExpenseAction, formData)}
@@ -219,21 +219,16 @@ function ExpenseRow({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                aria-label={`Edit ${row.material}`}
-                className="grid h-7 w-7 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-ink"
+                className={`${btn.base} ${btn.ghost} ${btn.sm}`}
               >
-                <Icon
-                  size={14}
-                  path={<path d="M11 2.5 13.5 5 5 13.5H2.5V11z" />}
-                />
+                Edit
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
-                aria-label={`Delete ${row.material}`}
-                className="grid h-7 w-7 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-neg"
+                className={`${btn.base} ${btn.danger} ${btn.sm}`}
               >
-                <Icon size={14} path={icons.trash} />
+                Delete
               </button>
             </>
           )}

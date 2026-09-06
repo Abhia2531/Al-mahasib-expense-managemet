@@ -111,3 +111,24 @@ export const BILL_STATUS_LABELS = {
   partially_paid: "Partially paid",
   paid: "Paid",
 } as const;
+
+const QTY_UNITS =
+  "bags?|bag|pcs?|pieces?|kg|kgs|tons?|tonnes?|trolleys?|trips?|ft|rft|sft|cft|" +
+  "nos?|units?|bundles?|rolls?|litres?|liters?|ltr|drums?|sheets?|coils?|loads?|" +
+  "dozen|doz|cartons?|cans?|tins?|packs?|boxes?|box";
+
+const QTY_RE = new RegExp(
+  `(\\d[\\d,]*(?:\\.\\d+)?)\\s*(${QTY_UNITS})\\b`,
+  "i",
+);
+
+/**
+ * Pulls a quantity out of an item name when one was written there, e.g.
+ * "Cement (Bestway, 210 bags)" -> "210 bags". Returns "" when none is found —
+ * quantity is optional, and the app never stored it as a separate field.
+ */
+export function extractQuantity(material: string): string {
+  const match = QTY_RE.exec(material);
+  if (!match) return "";
+  return `${match[1].replace(/,/g, "")} ${match[2].toLowerCase()}`;
+}

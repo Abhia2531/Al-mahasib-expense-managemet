@@ -10,6 +10,7 @@ import type {
   DailyExpense,
   DailyExpenseTotal,
   ProgressBill,
+  Project,
   ProjectFinancials,
 } from "@/lib/types";
 
@@ -97,6 +98,89 @@ export const getProjectFinancials = cache(
     return data ? normaliseFinancials(data) : null;
   },
 );
+
+/** The raw project row — for the edit form. Null if it does not exist. */
+export async function getProject(projectId: string): Promise<Project | null> {
+  await requireUser();
+  const supabase = await getServerSupabase();
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .maybeSingle();
+
+  if (error) fail("this project", error);
+  return data
+    ? { ...data, contract_value: toNumber(data.contract_value) }
+    : null;
+}
+
+export interface ExpenseHit {
+  id: string;
+  expense_date: string;
+  material: string;
+  price: number;
+}
+
+/**
+ * Find every purchase whose item name contains the search words, across the
+ * whole project. Forgiving: case-insensitive, and each whitespace-separated
+ * word only has to appear somewhere in the name (so "white paint" finds
+ * "Paint, white emulsion"). Newest purchase first.
+ */
+export async function searchExpenses(
+  projectId: string,
+  rawTerm: string,
+): Promise<ExpenseHit[]> {
+  await requireUser();
+
+  const words = sanitiseSearch(rawTerm)
+    .split(/\s+/)
+    .filter((w) => w.length > 0)
+    .slice(0, 6);
+  if (words.length === 0) return [];
+
+  const supabase = await getServerSupabase();
+  let query = supabase
+    .from("daily_expenses")
+    .select("id,expense_date,material,price")
+    .eq("project_id", projectId)
+    .order("expense_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  for (const word of words) {
+    query = query.ilike("material", `%${word}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) fail("expense search", error);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    expense_date: row.expense_date,
+    material: row.material,
+    price: toNumber(row.price),
+  }));
+}
+
+/** Every expense line for a project, newest first — used by the report. */
+export async function listAllExpenses(
+  projectId: string,
+): Promise<DailyExpense[]> {
+  await requireUser();
+  const supabase = await getServerSupabase();
+
+  const { data, error } = await supabase
+    .from("daily_expenses")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("expense_date", { ascending: false })
+    .order("created_at", { ascending: true });
+
+  if (error) fail("expenses", error);
+  return (data ?? []).map((row) => ({ ...row, price: toNumber(row.price) }));
+}
 
 /** The index of daily expense pages for one project, newest day first. */
 export async function listExpenseDays(

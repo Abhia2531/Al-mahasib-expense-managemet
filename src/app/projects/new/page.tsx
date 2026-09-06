@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { todayISO } from "@/lib/format";
-import { NewProjectForm } from "@/components/NewProjectForm";
+import { ProjectForm } from "@/components/ProjectForm";
 import { Card, Icon, icons, PageHeader } from "@/components/ui";
 
 export const metadata: Metadata = { title: "New project" };
@@ -16,16 +16,16 @@ export default function NewProjectPage() {
         back={
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-[12.5px] text-muted transition-colors hover:text-ink"
+            className="inline-flex items-center gap-1 text-[13px] text-steel transition-colors hover:text-steel-hover"
           >
             <Icon path={icons.chevronLeft} size={13} />
-            Projects
+            All projects
           </Link>
         }
       />
 
       <Card className="p-5 sm:p-6">
-        <NewProjectForm today={todayISO()} />
+        <ProjectForm mode="create" today={todayISO()} />
       </Card>
     </div>
   );

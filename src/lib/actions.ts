@@ -139,6 +139,80 @@ export async function createProjectAction(
   });
 }
 
+/**
+ * Edit the project's own details. Deliberately does NOT touch expenses,
+ * advances or bills — those are transactions, edited on their own screens.
+ */
+export async function updateProjectAction(
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  return run(async () => {
+    const id = requireUUID(text(form, "id"), "project");
+
+    const projectName = text(form, "project_name", 120);
+    if (!projectName) return fail("Project name is required.");
+
+    const contractValue = money(form, "contract_value");
+    if (Number.isNaN(contractValue))
+      return fail("Contract value must be a number.");
+    if (contractValue < 0) return fail("Contract value cannot be negative.");
+
+    const startDate = text(form, "start_date", 10);
+    if (startDate && !isValidISODate(startDate))
+      return fail("Start date is invalid.");
+
+    const { error } = await (await getServerSupabase())
+      .from("projects")
+      .update({
+        project_name: projectName,
+        client_name: text(form, "client_name", 120),
+        location: text(form, "location", 120),
+        start_date: startDate || null,
+        contract_value: contractValue,
+        description: text(form, "description", 1000),
+      })
+      .eq("id", id);
+
+    if (error) return dbFail("update project", error);
+
+    revalidatePath("/");
+    revalidatePath(`/projects/${id}`, "layout");
+    redirect(`/projects/${id}`);
+  });
+}
+
+/**
+ * Permanently delete a project. Foreign keys are `on delete cascade`, so its
+ * expenses, advances and bills go with it. The dialog on the client is the
+ * accident guard; this re-checks the confirmation token.
+ */
+export async function deleteProjectAction(
+  _prev: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  return run(async () => {
+    const id = requireUUID(text(form, "id"), "project");
+    const confirm = text(form, "confirm", 200);
+    const expected = text(form, "project_name", 200);
+    if (!confirm || confirm.toLowerCase() !== expected.toLowerCase()) {
+      return fail(
+        "Type the project name exactly to confirm deletion, or press Cancel.",
+      );
+    }
+
+    const { error } = await (await getServerSupabase())
+      .from("projects")
+      .delete()
+      .eq("id", id);
+
+    if (error) return dbFail("delete project", error);
+
+    revalidatePath("/");
+    redirect("/?deleted=1");
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* daily expenses                                                      */
 /* ------------------------------------------------------------------ */

@@ -1,69 +1,89 @@
 @import "tailwindcss";
 
 /* =====================================================================
-   Al Mahasib — "Ledger" design system
+   Al Mahasib — construction project & expense management
 
-   A working ledger, not a landing page. Hierarchy is carried by hairlines,
-   weight and space — never by coloured background blocks. One accent (a
-   restrained blue) is reserved for focus, links and active state; the
-   primary action is ink. Money is always tabular.
+   Warm concrete neutrals, a burnt-amber brand (site / safety, not hi-vis),
+   a steel-blue secondary for links and info. Colour is used with intent —
+   primary actions, status, key figures, hover — never as decoration.
    ===================================================================== */
 
 :root {
-  /* surfaces — warm paper neutrals */
-  --bg: #fbfbf9;
+  /* surfaces — warm concrete */
+  --bg: #f6f5f2;
   --surface: #ffffff;
-  --surface-2: #f5f4f1;
-  --surface-3: #edece7;
-  --border: #e7e5df;
-  --border-strong: #d7d4cb;
+  --surface-2: #f0efeb;
+  --surface-3: #e7e5df;
+  --border: #e3e1da;
+  --border-strong: #cfccc1;
 
-  /* ink — warm near-black, four steps */
-  --ink: #1c1b18;
-  --ink-2: #45423c;
-  --muted: #6f6b62;
-  --faint: #9a968c;
+  /* ink — slate-warm near-black, four steps */
+  --ink: #191b1e;
+  --ink-2: #43454a;
+  --muted: #6d6f74;
+  --faint: #97989d;
 
-  /* accent — used ONLY for focus, links, active tab, "today" */
-  --accent: #3a5ccc;
-  --accent-hover: #2f4bb0;
+  /* brand — burnt amber. primary actions, logo, active state. */
+  --brand: #c2410c;
+  --brand-hover: #9a3412;
+  --brand-soft: #fbeee4;
+  --on-brand: #ffffff;
 
-  /* semantic — text colour only, never a fill */
-  --pos: #1a7a4c;
-  --neg: #c23a34;
-  --warn: #8a6100;
+  /* steel blue — links, info, "today", focus */
+  --steel: #17537c;
+  --steel-hover: #123f5f;
+  --steel-soft: #e7f0f6;
 
-  --ring: var(--accent);
+  /* semantic — with soft fills for badges & figure tiles */
+  --pos: #15803d;
+  --pos-soft: #e6f3ea;
+  --neg: #bf3b30;
+  --neg-soft: #fbe9e7;
+  --warn: #a5670a;
+  --warn-soft: #fbf0df;
 
-  --shadow-sm: 0 1px 2px rgb(28 27 24 / 0.05);
-  --shadow-pop: 0 4px 12px rgb(28 27 24 / 0.1), 0 1px 3px rgb(28 27 24 / 0.06);
+  --ring: var(--steel);
+
+  --shadow-sm: 0 1px 2px rgb(25 27 30 / 0.06);
+  --shadow-card: 0 1px 2px rgb(25 27 30 / 0.05), 0 4px 12px rgb(25 27 30 / 0.04);
+  --shadow-pop: 0 10px 30px rgb(25 27 30 / 0.14), 0 3px 8px rgb(25 27 30 / 0.08);
 
   --ease: cubic-bezier(0.2, 0, 0, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #171613;
-    --surface: #1e1d19;
-    --surface-2: #26241f;
-    --surface-3: #2f2d26;
-    --border: #302e27;
-    --border-strong: #423f36;
+    --bg: #16161a;
+    --surface: #1e1e22;
+    --surface-2: #26262b;
+    --surface-3: #2f2f35;
+    --border: #313137;
+    --border-strong: #45454d;
 
-    --ink: #f3f1ea;
-    --ink-2: #cfccc1;
-    --muted: #948f82;
-    --faint: #6b675c;
+    --ink: #f1f0ec;
+    --ink-2: #cbcac3;
+    --muted: #918f88;
+    --faint: #67665f;
 
-    --accent: #8ba0f5;
-    --accent-hover: #a6b6ff;
+    --brand: #f0894a;
+    --brand-hover: #f6a06b;
+    --brand-soft: #38221664;
+    --on-brand: #1a1206;
 
-    --pos: #5cc48c;
-    --neg: #ef8a80;
-    --warn: #dcab54;
+    --steel: #6db1e0;
+    --steel-hover: #8fc5eb;
+    --steel-soft: #14293722;
+
+    --pos: #58c98b;
+    --pos-soft: #17301f66;
+    --neg: #ef8378;
+    --neg-soft: #34191666;
+    --warn: #dda94e;
+    --warn-soft: #33270f66;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-    --shadow-pop: 0 8px 24px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.4);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px rgb(0 0 0 / 0.35);
+    --shadow-pop: 0 16px 40px rgb(0 0 0 / 0.55), 0 4px 10px rgb(0 0 0 / 0.4);
   }
 }
 
@@ -78,11 +98,19 @@
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-steel: var(--steel);
+  --color-steel-hover: var(--steel-hover);
+  --color-steel-soft: var(--steel-soft);
   --color-pos: var(--pos);
+  --color-pos-soft: var(--pos-soft);
   --color-neg: var(--neg);
+  --color-neg-soft: var(--neg-soft);
   --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
 
   --radius-xs: 4px;
   --radius-sm: 6px;
@@ -120,7 +148,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
   letter-spacing: -0.006em;
   font-feature-settings: "cv11", "ss01";
@@ -128,7 +156,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* faint paper grain — breaks the digital flatness, ~2% */
+/* faint blueprint grid — construction texture, barely-there */
 body::before {
   content: "";
   position: fixed;
@@ -136,14 +164,13 @@ body::before {
   z-index: 0;
   pointer-events: none;
   opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 body > * {
   position: relative;
   z-index: 1;
 }
 
-/* headings: tighten, balance, no orphans */
 h1,
 h2,
 h3,
@@ -155,21 +182,18 @@ p {
   text-wrap: pretty;
 }
 
-/* tabular figures — every column of money */
 .tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   letter-spacing: 0;
 }
 
-/* one focus treatment, app-wide */
 :where(a, button, input, select, textarea, [tabindex], summary):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* interaction ergonomics */
 :where(a, button, [role="button"], input, select, textarea, label) {
   -webkit-tap-highlight-color: transparent;
 }
@@ -177,7 +201,6 @@ p {
   touch-action: manipulation;
 }
 
-/* number inputs: no spinners — they slow daily entry */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -188,7 +211,13 @@ input[type="number"] {
   appearance: textfield;
 }
 
-/* native date pickers pick up the theme */
+/* our search inputs supply their own clear button */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 input[type="date"] {
   color-scheme: light;
 }
@@ -199,7 +228,7 @@ input[type="date"] {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--accent) 22%, transparent);
+  background: color-mix(in oklab, var(--steel) 24%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -208,5 +237,64 @@ input[type="date"] {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- print — used by the project report --------------------------- */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm 14mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+  body::before {
+    display: none !important;
+  }
+
+  /* strip the app chrome — the report supplies its own */
+  body > header,
+  body > footer,
+  a[href="#main"],
+  [data-noprint] {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .print-sheet {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  .print-sheet * {
+    color: #000000 !important;
+    border-color: #9aa0a6 !important;
+    box-shadow: none !important;
+  }
+
+  .print-sheet table {
+    page-break-inside: auto;
+  }
+  .print-sheet tr {
+    page-break-inside: avoid;
+  }
+  .print-sheet thead {
+    display: table-header-group;
+  }
+  .print-break {
+    page-break-before: always;
   }
 }
