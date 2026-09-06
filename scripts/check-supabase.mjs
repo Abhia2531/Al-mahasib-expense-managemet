@@ -1,10 +1,12 @@
 /**
- * Verifies .env + schema before you run the app.
+ * Pre-flight for .env + Supabase, before `npm run dev`.
  *
  *   node scripts/check-supabase.mjs
  *
- * Reads .env directly (no dev server needed) and reports exactly which of
- * the four required pieces is missing: URL, secret key, table, or view.
+ * Checks: the two public env vars, that the publishable key reaches the
+ * project, that schema.sql has been applied, and that RLS is locked down
+ * (anon can read nothing). It cannot verify the authenticated-role policies
+ * or that a user exists — those need a login — so it prints reminders.
  */
 
 import { readFileSync } from "node:fs";
@@ -13,7 +15,17 @@ import { dirname, join } from "node:path";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/* ---- read .env (tolerating CRLF and quotes) ---------------------- */
+const c = { ok: "  ✓ ", no: "  ✗ ", info: "  · " };
+let failed = false;
+const fail = (m) => {
+  console.error(`\n${c.no}${m}\n`);
+  process.exitCode = 1;
+  failed = true;
+};
+const ok = (m) => console.log(c.ok + m);
+const info = (m) => console.log(c.info + m);
+
+/* ---- read .env ------------------------------------------------- */
 let env = {};
 try {
   for (const line of readFileSync(join(root, ".env"), "utf8").split(/\r?\n/)) {
@@ -21,90 +33,88 @@ try {
     if (m) env[m[1]] = m[2].replace(/\r$/, "").replace(/^["']|["']$/g, "").trim();
   }
 } catch {
-  fail("No .env file found. Copy .env.example to .env and fill it in.");
-}
-
-const url = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || "";
-const secret = env.SUPABASE_SECRET_KEY || "";
-
-if (!env.SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_URL) {
-  console.log("  · using NEXT_PUBLIC_SUPABASE_URL (SUPABASE_URL not set)");
-}
-if (env.NEXT_PUBLIC_SUPABASE_SECRET_KEY) {
-  fail(
-    "SUPABASE_SECRET_KEY is prefixed with NEXT_PUBLIC_ in your .env.\n" +
-      "    That would ship the secret key to the browser. Rename it to plain\n" +
-      "    SUPABASE_SECRET_KEY.",
-  );
-}
-
-function fail(msg) {
-  console.error(`\n  ✗ ${msg}\n`);
+  fail("No .env file. Copy .env.example to .env and fill it in.");
   process.exit(1);
 }
-function ok(msg) {
-  console.log(`  ✓ ${msg}`);
-}
 
-/* ---- 1. shape checks ------------------------------------------- */
+const url =
+  env.NEXT_PUBLIC_SUPABASE_URL || env.SUPABASE_URL || "";
+const key =
+  env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  env.SUPABASE_PUBLISHABLE_KEY ||
+  "";
+
 console.log("\nChecking .env …\n");
 
-if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(url)) {
-  fail(`SUPABASE_URL looks wrong: "${url || "(empty)"}"\n` +
-       `    Expected: https://<project-ref>.supabase.co`);
-}
-ok("SUPABASE_URL format looks right");
-
-if (!secret) fail("SUPABASE_SECRET_KEY is empty.");
-if (/^sb_secret_key_/.test(secret) || /^(.)([0-9][A-Za-z]){10}/.test(secret)) {
-  fail(`SUPABASE_SECRET_KEY looks like a placeholder, not a real key.\n` +
-       `    Real secret keys start with "sb_secret_" (no "_key_") or "eyJ" (legacy JWT).\n` +
-       `    Get it from: Supabase Dashboard -> Project Settings -> API Keys -> Secret keys`);
-}
-if (!/^sb_secret_/.test(secret) && !/^eyJ/.test(secret)) {
-  fail(`SUPABASE_SECRET_KEY does not look like a Supabase key.\n` +
-       `    Expected it to start with "sb_secret_" or "eyJ".`);
-}
-ok("SUPABASE_SECRET_KEY format looks right");
-
-/* ---- 2. live checks ------------------------------------------- */
-const base = url.replace(/\/$/, "");
-const headers = { apikey: secret, Authorization: `Bearer ${secret}` };
-
-const rootRes = await fetch(`${base}/rest/v1/`, { headers }).catch((e) =>
-  fail(`Could not reach ${base} — ${e.message}`),
-);
-
-if (rootRes.status === 401) {
-  const body = await rootRes.json().catch(() => ({}));
-  fail(`Supabase rejected the secret key: "${body.message || rootRes.status}"\n` +
-       `    The key in .env is not valid for this project.`);
-}
-ok("Secret key accepted by Supabase");
-
-/* ---- 3. schema check ----------------------------------------- */
-let missing = [];
-for (const rel of [
-  "projects",
-  "daily_expenses",
-  "advances",
-  "progress_bills",
-  "project_financials",
-  "daily_expense_totals",
-]) {
-  const r = await fetch(`${base}/rest/v1/${rel}?limit=0`, { headers });
-  if (r.status === 404 || r.status === 406) {
-    const b = await r.json().catch(() => ({}));
-    if ((b.code || "") === "PGRST205" || /Could not find/.test(b.message || "")) {
-      missing.push(rel);
-    }
+for (const leaked of ["SUPABASE_SECRET_KEY", "NEXT_PUBLIC_SUPABASE_SECRET_KEY"]) {
+  if (env[leaked]) {
+    info(
+      `${leaked} is set but unused — this app has no service-role key. ` +
+        `You can remove that line.`,
+    );
   }
 }
 
-if (missing.length) {
-  fail(`These tables/views are missing: ${missing.join(", ")}\n` +
-       `    Run supabase/schema.sql once in the Supabase SQL Editor.`);
+if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(url)) {
+  fail(`NEXT_PUBLIC_SUPABASE_URL looks wrong: "${url || "(empty)"}"`);
 }
-ok("All tables and views exist");
+if (!/^sb_publishable_/.test(key) && !/^eyJ/.test(key)) {
+  fail(
+    `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY should start with "sb_publishable_" ` +
+      `or "eyJ". Got "${key.slice(0, 12)}…"`,
+  );
+}
+if (failed) process.exit(1);
+ok("Env vars present and well-formed");
 
-console.log("\n  Everything checks out. Run: npm run dev\n");
+/* ---- live checks --------------------------------------------- */
+const base = url.replace(/\/$/, "");
+const h = { apikey: key, Authorization: `Bearer ${key}` };
+
+const res = await fetch(`${base}/rest/v1/projects?limit=1`, { headers: h }).catch(
+  (e) => {
+    fail(`Could not reach ${base} — ${e.message}`);
+    process.exit(1);
+  },
+);
+const body = await res.json().catch(() => ({}));
+const msg = body.message || "";
+
+if (/unregistered/i.test(msg)) {
+  fail(
+    `Supabase says the key is "Unregistered" — it was revoked or rotated.\n` +
+      `    Copy the current publishable key from Project Settings -> API Keys.`,
+  );
+  process.exit(1);
+}
+if (/invalid.*api key/i.test(msg)) {
+  fail(`Supabase rejected the key: "${msg}"`);
+  process.exit(1);
+}
+if (body.code === "PGRST205" || /Could not find the table/i.test(msg)) {
+  fail(`Schema not applied. Run supabase/schema.sql in the SQL Editor.`);
+  process.exit(1);
+}
+ok("Publishable key reaches the project");
+
+/* anon should be denied (RLS on, no anon policy) — that is the goal. */
+if (res.status === 200) {
+  info(
+    "anon can READ the tables — RLS is not locked down.\n" +
+      "    If you ran an older enable-app-access.sql, drop its anon policies;\n" +
+      "    the app now uses authenticated-only policies (auth-policies.sql).",
+  );
+} else if (res.status === 401 && body.code === "42501") {
+  ok("RLS is locked down (anon denied)");
+} else if (res.status === 401) {
+  ok("RLS is locked down (anon denied)");
+}
+
+console.log(`
+  Two things still need doing in the Supabase dashboard:
+    1. SQL Editor  -> run supabase/auth-policies.sql
+    2. Authentication -> Users -> Add user  (tick "Auto Confirm User")
+
+  Then:  npm run dev   ->   sign in at /login
+`);

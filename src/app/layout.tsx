@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { Logo } from "@/components/Logo";
+import { AppHeader } from "@/components/AppHeader";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -38,19 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
 
-        <header className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur-md">
-          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-            <Logo />
-            <nav aria-label="Main">
-              <Link
-                href="/"
-                className="rounded-lg px-3 py-2 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink"
-              >
-                Projects
-              </Link>
-            </nav>
-          </div>
-        </header>
+        <AppHeader />
 
         <main id="main" className="flex-1">
           {children}

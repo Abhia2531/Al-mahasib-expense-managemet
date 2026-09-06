@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { unstable_rethrow } from "next/navigation";
 
 import { listProjects } from "@/lib/queries";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -21,6 +22,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   try {
     projects = await listProjects(search);
   } catch (error) {
+    unstable_rethrow(error); // let redirect()/notFound() through
     loadError = error instanceof Error ? error.message : String(error);
   }
 

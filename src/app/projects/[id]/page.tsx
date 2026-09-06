@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 import type { Metadata } from "next";
 
 import { getProjectFinancials, listExpenseDays } from "@/lib/queries";
@@ -10,7 +10,10 @@ export async function generateMetadata({
   params,
 }: PageProps<"/projects/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const project = await getProjectFinancials(id).catch(() => null);
+  const project = await getProjectFinancials(id).catch((e) => {
+    unstable_rethrow(e);
+    return null;
+  });
   return { title: project?.project_name ?? "Project" };
 }
 

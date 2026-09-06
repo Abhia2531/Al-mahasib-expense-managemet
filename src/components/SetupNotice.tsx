@@ -1,64 +1,53 @@
 import { Card } from "@/components/ui";
 
 /**
- * Shown instead of a stack trace when the app cannot reach Supabase —
- * almost always a missing/invalid key or a schema that has not been run yet.
+ * Shown instead of a stack trace when Supabase is not reachable — usually a
+ * missing env var, an un-applied schema, or missing policies.
  */
 export function SetupNotice({ detail }: { detail?: string }) {
+  const text = detail ?? "";
+  const permissionDenied = /permission denied|42501|row-level security/i.test(text);
+  const schemaMissing = /could not find the table|PGRST205/i.test(text);
+
   return (
     <Card className="overflow-hidden">
       <div className="border-b border-border bg-warn-soft px-5 py-3">
-        <h2 className="text-sm font-semibold text-warn">
-          Not connected to Supabase yet
-        </h2>
+        <h2 className="text-sm font-semibold text-warn">Supabase setup incomplete</h2>
       </div>
 
-      <div className="space-y-5 px-5 py-5 text-sm text-ink-2">
-        <p>Two things need to be in place before any data can load:</p>
-
-        <ol className="space-y-4">
-          <li className="flex gap-3">
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent">
-              1
-            </span>
-            <div className="min-w-0">
-              <p className="font-medium text-ink">Add real API keys</p>
-              <p className="mt-0.5">
-                In the Supabase dashboard open{" "}
-                <span className="font-medium text-ink">
-                  Project Settings → API Keys
-                </span>
-                , then put the values in{" "}
-                <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[12px]">
-                  .env
-                </code>{" "}
-                and restart the dev server:
-              </p>
-              <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-surface-2 p-3 font-mono text-[12px] leading-relaxed">
-                {`SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_SECRET_KEY=sb_secret_...`}
-              </pre>
-            </div>
-          </li>
-
-          <li className="flex gap-3">
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent">
-              2
-            </span>
-            <div className="min-w-0">
-              <p className="font-medium text-ink">Create the tables</p>
-              <p className="mt-0.5">
-                Open{" "}
-                <span className="font-medium text-ink">SQL Editor → New query</span>{" "}
-                in Supabase, paste the contents of{" "}
-                <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[12px]">
-                  supabase/schema.sql
-                </code>{" "}
-                and run it once.
-              </p>
-            </div>
-          </li>
-        </ol>
+      <div className="space-y-4 px-5 py-5 text-sm text-ink-2">
+        {permissionDenied ? (
+          <p>
+            The database is reachable but the policies are missing. In Supabase,
+            open <Strong>SQL Editor → New query</Strong> and run{" "}
+            <Code>supabase/auth-policies.sql</Code>, then add your login under{" "}
+            <Strong>Authentication → Users</Strong>.
+          </p>
+        ) : schemaMissing ? (
+          <p>
+            The tables do not exist yet. In Supabase, open{" "}
+            <Strong>SQL Editor → New query</Strong> and run{" "}
+            <Code>supabase/schema.sql</Code>, then{" "}
+            <Code>supabase/auth-policies.sql</Code>.
+          </p>
+        ) : (
+          <>
+            <p>Finish the setup in <Code>README.md</Code>:</p>
+            <ol className="ml-4 list-decimal space-y-1.5">
+              <li>
+                <Code>NEXT_PUBLIC_SUPABASE_URL</Code> and{" "}
+                <Code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</Code> in{" "}
+                <Code>.env</Code>
+              </li>
+              <li>run <Code>supabase/schema.sql</Code></li>
+              <li>run <Code>supabase/auth-policies.sql</Code></li>
+              <li>add a user under <Strong>Authentication → Users</Strong></li>
+            </ol>
+            <p className="text-xs text-muted">
+              <Code>npm run check:supabase</Code> reports what is outstanding.
+            </p>
+          </>
+        )}
 
         {detail ? (
           <div>
@@ -72,5 +61,17 @@ SUPABASE_SECRET_KEY=sb_secret_...`}
         ) : null}
       </div>
     </Card>
+  );
+}
+
+function Strong({ children }: { children: React.ReactNode }) {
+  return <span className="font-medium text-ink">{children}</span>;
+}
+
+function Code({ children }: { children: React.ReactNode }) {
+  return (
+    <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[12px]">
+      {children}
+    </code>
   );
 }

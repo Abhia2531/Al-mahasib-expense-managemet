@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 
 import { getProjectFinancials } from "@/lib/queries";
 import { formatDate } from "@/lib/format";
@@ -21,6 +21,7 @@ export default async function ProjectLayout({
   try {
     project = await getProjectFinancials(id);
   } catch (error) {
+    unstable_rethrow(error); // let redirect()/notFound() through
     return (
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <SetupNotice
