@@ -108,6 +108,6 @@ export function shiftISODate(iso: string, days: number): string {
 
 export const BILL_STATUS_LABELS = {
   pending: "Pending",
-  partially_paid: "Partially Paid",
+  partially_paid: "Partially paid",
   paid: "Paid",
 } as const;

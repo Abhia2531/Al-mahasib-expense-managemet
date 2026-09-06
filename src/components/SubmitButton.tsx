@@ -5,9 +5,8 @@ import { useFormStatus } from "react-dom";
 import { btn } from "@/components/ui";
 
 /**
- * Submit button that disables itself while its form is in flight.
- * Must be rendered *inside* the <form> it belongs to — that is how
- * useFormStatus finds it.
+ * Submit button that disables itself while its form is in flight. Must be
+ * rendered inside the <form> it belongs to — that is how useFormStatus finds it.
  */
 export function SubmitButton({
   children,
@@ -19,7 +18,7 @@ export function SubmitButton({
   children: React.ReactNode;
   pendingLabel?: string;
   variant?: "primary" | "secondary" | "ghost" | "danger";
-  size?: "small";
+  size?: "sm" | "lg";
   className?: string;
 }) {
   const { pending } = useFormStatus();
@@ -28,7 +27,7 @@ export function SubmitButton({
       type="submit"
       disabled={pending}
       aria-busy={pending}
-      className={`${btn.base} ${btn[variant]} ${size ? btn.small : ""} ${className}`}
+      className={`${btn.base} ${btn[variant]} ${size ? btn[size] : ""} ${className}`}
     >
       {pending && pendingLabel ? pendingLabel : children}
     </button>

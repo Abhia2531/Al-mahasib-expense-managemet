@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { Icon, icons } from "@/components/ui";
+
 /**
- * Live project search. Rewrites `?q=` (replace, not push, so the back button
- * does not walk through every keystroke) and lets the server component
- * re-query. Debounced so typing does not fire a request per character.
+ * Live project search. Rewrites `?q=` (replace, not push, so Back does not
+ * walk every keystroke) and lets the server component re-query. Debounced.
  */
 export function ProjectSearch({ initial = "" }: { initial?: string }) {
   const router = useRouter();
@@ -20,53 +21,40 @@ export function ProjectSearch({ initial = "" }: { initial?: string }) {
       firstRender.current = false;
       return;
     }
-
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
       const trimmed = value.trim();
       if (trimmed) params.set("q", trimmed);
       else params.delete("q");
-
       const query = params.toString();
       startTransition(() => {
         router.replace(query ? `/?${query}` : "/", { scroll: false });
       });
     }, 250);
-
     return () => clearTimeout(timer);
-    // `searchParams` is intentionally omitted: including it would re-run this
-    // effect from the navigation it just caused.
+    // searchParams intentionally omitted — it changes from the nav we cause.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, router]);
 
   return (
     <div className="relative w-full sm:max-w-xs">
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      >
-        <circle cx="7" cy="7" r="4.5" />
-        <path d="M10.5 10.5L14 14" />
-      </svg>
+      <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-faint">
+        <Icon path={icons.search} size={14} />
+      </span>
       <input
         type="search"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Search projects or clients…"
+        placeholder="Search projects, clients…"
         aria-label="Search projects"
-        className="h-10 w-full rounded-lg border border-border-strong bg-surface pl-9 pr-9 text-sm text-ink placeholder:text-muted focus:border-accent outline-none"
+        autoComplete="off"
+        spellCheck={false}
+        className="h-9 w-full rounded-md border border-border-strong bg-surface pl-8 pr-8 text-[13px] text-ink placeholder:text-faint outline-none transition-colors focus:border-accent focus:ring-[3px] focus:ring-accent/15"
       />
       {isPending ? (
         <span
           aria-hidden="true"
-          className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin rounded-full border-2 border-border-strong border-t-accent"
+          className="absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 animate-spin rounded-full border-2 border-border-strong border-t-accent"
         />
       ) : null}
     </div>

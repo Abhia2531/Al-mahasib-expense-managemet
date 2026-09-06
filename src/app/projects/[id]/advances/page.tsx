@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { getProjectFinancials, listAdvances } from "@/lib/queries";
 import { todayISO } from "@/lib/format";
 import { AdvancesManager } from "@/components/AdvancesManager";
-import { SectionHeading, StatTile } from "@/components/ui";
+import { Figures, SectionHeading } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Advance payments" };
+export const metadata: Metadata = { title: "Advances" };
 
 export default async function AdvancesPage({
   params,
@@ -20,32 +20,27 @@ export default async function AdvancesPage({
   if (!project) notFound();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SectionHeading
         title="Advance payments"
         description="Money received from the client before or during the work."
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatTile
-          label="Total advance received"
-          value={project.total_advance_received}
-        />
-        <StatTile label="Total expenses" value={project.total_expenses} />
-        <StatTile
-          label="Remaining advance"
-          value={project.remaining_advance}
-          tone={project.remaining_advance < 0 ? "neg" : "pos"}
-          hint="Advance − expenses"
-          emphasis
-        />
-      </div>
-
-      <AdvancesManager
-        projectId={id}
-        advances={advances}
-        today={todayISO()}
+      <Figures
+        items={[
+          { label: "Advance received", value: project.total_advance_received },
+          { label: "Total expenses", value: project.total_expenses },
+          {
+            label: "Remaining advance",
+            value: project.remaining_advance,
+            hint: "advance − expenses",
+            tone: project.remaining_advance < 0 ? "neg" : "pos",
+            lead: true,
+          },
+        ]}
       />
+
+      <AdvancesManager projectId={id} advances={advances} today={todayISO()} />
     </div>
   );
 }

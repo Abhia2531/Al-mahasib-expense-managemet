@@ -7,8 +7,7 @@ import { btn, input } from "@/components/ui";
 
 /**
  * Opens the expense page for any date. A day's page exists as soon as you
- * navigate to it — there is nothing to "create" first, which keeps daily
- * entry down to picking a date and typing.
+ * navigate to it — nothing to "create" first.
  */
 export function OpenDayPicker({
   projectId,
@@ -31,7 +30,7 @@ export function OpenDayPicker({
       <div>
         <label
           htmlFor="open-day"
-          className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted"
+          className="mb-1 block text-[11px] font-medium uppercase tracking-[0.05em] text-faint"
         >
           Open a date
         </label>
@@ -40,7 +39,7 @@ export function OpenDayPicker({
           type="date"
           value={date}
           onChange={(event) => setDate(event.target.value)}
-          className={`${input} w-44`}
+          className={`${input} w-[10.5rem]`}
         />
       </div>
       <button type="submit" className={`${btn.base} ${btn.secondary}`}>

@@ -1,43 +1,25 @@
 import Link from "next/link";
 
-/** Wordmark used in the app header. Links home. */
-export function Logo({ compact = false }: { compact?: boolean }) {
+/** Wordmark. A ruled-ledger glyph in ink + the name. Links home. */
+export function Logo({ href = "/" }: { href?: string }) {
   return (
     <Link
-      href="/"
-      className="inline-flex items-center gap-2.5 rounded-lg"
-      aria-label="Al Mahasib — go to home"
+      href={href}
+      className="group inline-flex items-center gap-2.5"
+      aria-label="Al Mahasib, go to projects"
     >
       <span
         aria-hidden="true"
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent text-white shadow-sm"
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-border-strong bg-surface text-ink"
       >
-        <svg
-          width="19"
-          height="19"
-          viewBox="0 0 20 20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          {/* ledger page with a rule and a rising line */}
-          <path d="M4 2.5h9.5L16 5v12.5H4z" />
-          <path d="M6.6 8.2h6.8M6.6 11h3.2" />
-          <path d="M11.4 14.2l1.6-1.9 1.2 1" opacity="0.75" />
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <path d="M3 3.5h10M3 8h10M3 12.5h6" />
+          <path d="M11.5 11 13 12.5 11.5 14" opacity="0.55" />
         </svg>
       </span>
-      {!compact && (
-        <span className="leading-tight">
-          <span className="block text-[15px] font-semibold tracking-tight text-ink">
-            Al Mahasib
-          </span>
-          <span className="block text-[11px] font-medium tracking-wide text-muted">
-            Project Finance
-          </span>
-        </span>
-      )}
+      <span className="text-[14px] font-semibold tracking-[-0.02em] text-ink">
+        Al&nbsp;Mahasib
+      </span>
     </Link>
   );
 }

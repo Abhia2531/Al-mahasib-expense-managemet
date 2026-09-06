@@ -1,5 +1,3 @@
-import { Card } from "@/components/ui";
-
 /**
  * Shown instead of a stack trace when Supabase is not reachable — usually a
  * missing env var, an un-applied schema, or missing policies.
@@ -10,12 +8,14 @@ export function SetupNotice({ detail }: { detail?: string }) {
   const schemaMissing = /could not find the table|PGRST205/i.test(text);
 
   return (
-    <Card className="overflow-hidden">
-      <div className="border-b border-border bg-warn-soft px-5 py-3">
-        <h2 className="text-sm font-semibold text-warn">Supabase setup incomplete</h2>
+    <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]">
+      <div className="border-b border-border border-l-2 border-l-warn px-4 py-2.5">
+        <h2 className="text-[13px] font-semibold text-warn">
+          Supabase setup incomplete
+        </h2>
       </div>
 
-      <div className="space-y-4 px-5 py-5 text-sm text-ink-2">
+      <div className="space-y-3.5 px-4 py-4 text-[13px] text-ink-2">
         {permissionDenied ? (
           <p>
             The database is reachable but the policies are missing. In Supabase,
@@ -32,18 +32,26 @@ export function SetupNotice({ detail }: { detail?: string }) {
           </p>
         ) : (
           <>
-            <p>Finish the setup in <Code>README.md</Code>:</p>
+            <p>
+              Finish the setup in <Code>README.md</Code>:
+            </p>
             <ol className="ml-4 list-decimal space-y-1.5">
               <li>
                 <Code>NEXT_PUBLIC_SUPABASE_URL</Code> and{" "}
                 <Code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</Code> in{" "}
                 <Code>.env</Code>
               </li>
-              <li>run <Code>supabase/schema.sql</Code></li>
-              <li>run <Code>supabase/auth-policies.sql</Code></li>
-              <li>add a user under <Strong>Authentication → Users</Strong></li>
+              <li>
+                run <Code>supabase/schema.sql</Code>
+              </li>
+              <li>
+                run <Code>supabase/auth-policies.sql</Code>
+              </li>
+              <li>
+                add a user under <Strong>Authentication → Users</Strong>
+              </li>
             </ol>
-            <p className="text-xs text-muted">
+            <p className="text-[11.5px] text-muted">
               <Code>npm run check:supabase</Code> reports what is outstanding.
             </p>
           </>
@@ -51,16 +59,16 @@ export function SetupNotice({ detail }: { detail?: string }) {
 
         {detail ? (
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+            <p className="text-[10.5px] font-medium uppercase tracking-[0.05em] text-faint">
               Error reported
             </p>
-            <p className="mt-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-[12px] break-words text-ink-2">
+            <p className="mt-1 rounded-md border border-border bg-surface-2 px-2.5 py-2 font-mono text-[11.5px] break-words text-ink-2">
               {detail}
             </p>
           </div>
         ) : null}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -70,7 +78,10 @@ function Strong({ children }: { children: React.ReactNode }) {
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[12px]">
+    <code
+      translate="no"
+      className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[11.5px]"
+    >
       {children}
     </code>
   );

@@ -9,15 +9,15 @@ import {
 } from "@/lib/actions";
 import { idleState } from "@/lib/action-state";
 import { formatMoney } from "@/lib/format";
-import { btn, ErrorNote, input } from "@/components/ui";
+import { btn, ErrorNote, Icon, icons, input } from "@/components/ui";
 import type { DailyExpense } from "@/lib/types";
 
 /**
- * The Material | Price table for one day.
+ * The Material | Price ledger for one day.
  *
- * Optimised for repeat entry: after a row is saved the form clears itself and
- * puts the cursor back in Material, so a whole day can be typed without
- * touching the mouse.
+ * Built for repeat entry: the add line stays at the bottom, and after each
+ * save it clears and refocuses Material so a whole day can be typed without
+ * the mouse.
  */
 export function ExpenseDayTable({
   projectId,
@@ -31,30 +31,28 @@ export function ExpenseDayTable({
   const dailyTotal = rows.reduce((sum, row) => sum + row.price, 0);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      <table className="w-full border-collapse text-sm">
-        <caption className="sr-only">
-          Materials and prices recorded on this day
-        </caption>
+    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <table className="w-full text-[13px]">
+        <caption className="sr-only">Materials and prices for this day</caption>
         <thead>
-          <tr className="border-b border-border bg-surface-2 text-left">
-            <th scope="col" className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted">
+          <tr className="text-[11px] font-medium uppercase tracking-[0.05em] text-faint">
+            <th scope="col" className="px-4 py-2 text-left font-medium">
               Material
             </th>
-            <th scope="col" className="w-40 px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-muted">
+            <th scope="col" className="w-40 px-4 py-2 text-right font-medium">
               Price
             </th>
-            <th scope="col" className="w-24 px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-muted">
+            <th scope="col" className="w-20 px-2 py-2">
               <span className="sr-only">Actions</span>
             </th>
           </tr>
         </thead>
 
-        <tbody className="divide-y divide-border">
+        <tbody>
           {rows.length === 0 ? (
-            <tr>
-              <td colSpan={3} className="px-4 py-8 text-center text-sm text-muted">
-                No materials recorded for this day yet. Add the first one below.
+            <tr className="border-t border-border">
+              <td colSpan={3} className="px-4 py-7 text-center text-muted">
+                No materials on this day yet — add the first below.
               </td>
             </tr>
           ) : (
@@ -70,14 +68,14 @@ export function ExpenseDayTable({
         </tbody>
 
         <tfoot>
-          <tr className="border-t-2 border-border-strong bg-accent-soft">
-            <th scope="row" className="px-4 py-3.5 text-left text-sm font-semibold text-ink">
-              Daily Total
+          <tr className="border-t-2 border-border-strong">
+            <th scope="row" className="px-4 py-3 text-left text-[13px] font-semibold text-ink">
+              Daily total
             </th>
-            <td className="tnum px-4 py-3.5 text-right text-base font-bold text-ink">
+            <td className="tnum px-4 py-3 text-right text-[15px] font-bold text-ink">
               {formatMoney(dailyTotal)}
             </td>
-            <td className="px-4 py-3.5" />
+            <td className="px-2" />
           </tr>
         </tfoot>
       </table>
@@ -121,13 +119,13 @@ function ExpenseRow({
 
   if (editing) {
     return (
-      <tr className="bg-surface-2">
-        <td colSpan={3} className="px-4 py-3">
+      <tr className="border-t border-border bg-surface-2">
+        <td colSpan={3} className="px-3 py-2.5">
           <form
             action={(formData) =>
               runAction(updateExpenseAction, formData, () => setEditing(false))
             }
-            className="flex flex-wrap items-start gap-2"
+            className="flex flex-wrap items-center gap-2"
           >
             <input type="hidden" name="id" value={row.id} />
             <input type="hidden" name="project_id" value={projectId} />
@@ -139,19 +137,23 @@ function ExpenseRow({
               required
               autoFocus
               aria-label="Material"
+              autoComplete="off"
               className={`${input} min-w-0 flex-1`}
             />
-            <input
-              name="price"
-              defaultValue={String(row.price)}
-              inputMode="decimal"
-              aria-label="Price"
-              className={`${input} tnum w-32 text-right`}
-            />
+            <div className="w-28 shrink-0">
+              <input
+                name="price"
+                defaultValue={String(row.price)}
+                inputMode="decimal"
+                aria-label="Price"
+                autoComplete="off"
+                className={`${input} tnum text-right`}
+              />
+            </div>
             <button
               type="submit"
               disabled={isPending}
-              className={`${btn.base} ${btn.primary} ${btn.small}`}
+              className={`${btn.base} ${btn.primary} ${btn.sm}`}
             >
               {isPending ? "Saving…" : "Save"}
             </button>
@@ -161,7 +163,7 @@ function ExpenseRow({
                 setEditing(false);
                 setError(null);
               }}
-              className={`${btn.base} ${btn.secondary} ${btn.small}`}
+              className={`${btn.base} ${btn.ghost} ${btn.sm}`}
             >
               Cancel
             </button>
@@ -178,13 +180,17 @@ function ExpenseRow({
   }
 
   return (
-    <tr className={isPending ? "opacity-50" : undefined}>
-      <td className="px-4 py-3 text-ink">{row.material}</td>
-      <td className="tnum px-4 py-3 text-right font-medium text-ink">
+    <tr
+      className={`group border-t border-border transition-colors hover:bg-surface-2 ${
+        isPending ? "opacity-50" : ""
+      }`}
+    >
+      <td className="px-4 py-2.5 text-ink">{row.material}</td>
+      <td className="tnum px-4 py-2.5 text-right font-medium text-ink">
         {formatMoney(row.price)}
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center justify-end gap-1">
+      <td className="px-2 py-1.5">
+        <div className="flex items-center justify-end gap-0.5">
           {confirmingDelete ? (
             <form
               action={(formData) => runAction(deleteExpenseAction, formData)}
@@ -196,14 +202,14 @@ function ExpenseRow({
               <button
                 type="submit"
                 disabled={isPending}
-                className={`${btn.base} ${btn.danger} ${btn.small} font-semibold`}
+                className={`${btn.base} ${btn.danger} ${btn.sm} font-semibold`}
               >
                 Delete
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(false)}
-                className={`${btn.base} ${btn.ghost} ${btn.small}`}
+                className={`${btn.base} ${btn.ghost} ${btn.sm}`}
               >
                 Keep
               </button>
@@ -213,34 +219,27 @@ function ExpenseRow({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className={`${btn.base} ${btn.ghost} ${btn.small}`}
+                aria-label={`Edit ${row.material}`}
+                className="grid h-7 w-7 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-ink"
               >
-                Edit
+                <Icon
+                  size={14}
+                  path={<path d="M11 2.5 13.5 5 5 13.5H2.5V11z" />}
+                />
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
                 aria-label={`Delete ${row.material}`}
-                className={`${btn.base} ${btn.danger} ${btn.small}`}
+                className="grid h-7 w-7 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-neg"
               >
-                <svg
-                  aria-hidden="true"
-                  width="15"
-                  height="15"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                >
-                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8h5.8l.6-8" />
-                </svg>
+                <Icon size={14} path={icons.trash} />
               </button>
             </>
           )}
         </div>
         {error && !editing ? (
-          <p role="alert" className="mt-1 text-right text-xs text-neg">
+          <p role="alert" aria-live="polite" className="mt-1 text-right text-[11.5px] text-neg">
             {error}
           </p>
         ) : null}
@@ -277,54 +276,45 @@ function AddExpenseRow({
   }
 
   return (
-    <div className="border-t border-border bg-surface p-4">
-      <form ref={formRef} action={handleAdd} className="flex flex-wrap items-end gap-2">
+    <div className="border-t border-border-strong bg-surface-2 px-3 py-2.5">
+      <form
+        ref={formRef}
+        action={handleAdd}
+        className="flex flex-wrap items-center gap-2"
+      >
         <input type="hidden" name="project_id" value={projectId} />
         <input type="hidden" name="expense_date" value={expenseDate} />
 
-        <div className="min-w-0 flex-1 basis-48">
-          <label
-            htmlFor="new-material"
-            className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted"
-          >
-            Material
-          </label>
-          <input
-            id="new-material"
-            name="material"
-            ref={materialRef}
-            required
-            maxLength={120}
-            placeholder="e.g. Cement"
-            autoComplete="off"
-            className={input}
-          />
-        </div>
-
-        <div className="w-36">
-          <label
-            htmlFor="new-price"
-            className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted"
-          >
-            Price
-          </label>
+        <input
+          id="new-material"
+          name="material"
+          ref={materialRef}
+          required
+          maxLength={120}
+          placeholder="Material — e.g. Cement"
+          aria-label="New material"
+          autoComplete="off"
+          className={`${input} min-w-0 flex-1 basis-44`}
+        />
+        <div className="w-28 shrink-0">
           <input
             id="new-price"
             name="price"
             inputMode="decimal"
             required
             placeholder="0"
+            aria-label="Price"
             autoComplete="off"
             className={`${input} tnum text-right`}
           />
         </div>
-
         <button
           type="submit"
           disabled={isPending}
-          className={`${btn.base} ${btn.primary}`}
+          className={`${btn.base} ${btn.primary} ${btn.sm}`}
         >
-          {isPending ? "Adding…" : "Add item"}
+          <Icon path={icons.plus} size={13} />
+          {isPending ? "Adding…" : "Add"}
         </button>
       </form>
 

@@ -4,9 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 /**
- * Section navigation inside a project. Every href is built from the current
- * project id, so switching sections can never change which project you are
- * looking at.
+ * Section navigation inside a project. Every href is built from the project id
+ * in the URL, so switching sections never changes which project is shown.
  */
 export function ProjectTabs({ projectId }: { projectId: string }) {
   const pathname = usePathname();
@@ -14,18 +13,16 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
 
   const tabs = [
     { href: base, label: "Dashboard" },
-    { href: `${base}/expenses`, label: "Daily Expenses" },
-    { href: `${base}/advances`, label: "Advance Payments" },
-    { href: `${base}/billing`, label: "Progress Billing" },
+    { href: `${base}/expenses`, label: "Daily expenses" },
+    { href: `${base}/advances`, label: "Advances" },
+    { href: `${base}/billing`, label: "Billing" },
     { href: `${base}/reports`, label: "Reports" },
   ];
 
   return (
     <nav aria-label="Project sections" className="-mb-px overflow-x-auto">
-      <ul className="flex min-w-max gap-1">
+      <ul className="flex min-w-max gap-5">
         {tabs.map((tab) => {
-          // Dashboard is the index route, so it must match exactly; the others
-          // stay active on their own nested pages (e.g. a single expense day).
           const active =
             tab.href === base
               ? pathname === base
@@ -37,10 +34,10 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={
-                  "inline-block whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors " +
+                  "inline-block whitespace-nowrap border-b-[1.5px] py-2.5 text-[13px] font-medium transition-colors " +
                   (active
-                    ? "border-accent text-accent"
-                    : "border-transparent text-muted hover:border-border-strong hover:text-ink")
+                    ? "border-ink text-ink"
+                    : "border-transparent text-muted hover:text-ink")
                 }
               >
                 {tab.label}

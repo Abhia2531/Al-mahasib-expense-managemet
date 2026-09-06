@@ -34,14 +34,11 @@ export function LoginForm() {
     });
 
     if (signInError) {
-      // Supabase already returns a generic "Invalid login credentials" that
-      // does not reveal whether the email exists.
       setError(signInError.message);
       setPending(false);
       return;
     }
 
-    // Full navigation so the middleware picks up the fresh session cookies.
     router.replace(next);
     router.refresh();
   }
@@ -53,8 +50,11 @@ export function LoginForm() {
       <Field htmlFor="email" label="Email">
         <input
           id="email"
+          name="email"
           type="email"
           autoComplete="username"
+          inputMode="email"
+          spellCheck={false}
           required
           autoFocus
           value={email}
@@ -66,6 +66,7 @@ export function LoginForm() {
       <Field htmlFor="password" label="Password">
         <input
           id="password"
+          name="password"
           type="password"
           autoComplete="current-password"
           required
@@ -78,7 +79,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className={`${btn.base} ${btn.primary} w-full`}
+        className={`${btn.base} ${btn.primary} ${btn.lg} w-full`}
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

@@ -5,11 +5,11 @@ import { getProjectFinancials } from "@/lib/queries";
 import { formatDate } from "@/lib/format";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { SetupNotice } from "@/components/SetupNotice";
+import { Icon, icons } from "@/components/ui";
 
 /**
- * Wraps every section of one project. It resolves the project once, so the
- * header and tabs below always describe the project in the URL — that is what
- * makes "all sections work with the currently selected project" automatic.
+ * Wraps every section of one project — resolves the project once so the
+ * header and tabs always describe the project in the URL.
  */
 export default async function ProjectLayout({
   children,
@@ -21,9 +21,9 @@ export default async function ProjectLayout({
   try {
     project = await getProjectFinancials(id);
   } catch (error) {
-    unstable_rethrow(error); // let redirect()/notFound() through
+    unstable_rethrow(error);
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-6">
         <SetupNotice
           detail={error instanceof Error ? error.message : String(error)}
         />
@@ -34,49 +34,41 @@ export default async function ProjectLayout({
   if (!project) notFound();
 
   const meta = [
-    project.client_name,
-    project.location,
+    project.client_name || null,
+    project.location || null,
     project.start_date ? `Started ${formatDate(project.start_date)}` : null,
   ].filter(Boolean);
 
   return (
     <>
       <div className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6">
+        <div className="mx-auto max-w-[1100px] px-4 pt-4 sm:px-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"
+            className="inline-flex items-center gap-1 text-[12.5px] text-muted transition-colors hover:text-ink"
           >
-            <svg
-              aria-hidden="true"
-              width="15"
-              height="15"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9.5 3.5L5 8l4.5 4.5" />
-            </svg>
-            All projects
+            <Icon path={icons.chevronLeft} size={13} />
+            Projects
           </Link>
 
-          <h1 className="mt-2.5 text-2xl font-semibold tracking-tight text-ink">
+          <h1 className="mt-2 text-[20px] font-semibold leading-tight tracking-[-0.02em] text-ink">
             {project.project_name}
           </h1>
           {meta.length > 0 ? (
-            <p className="mt-1 text-sm text-muted">{meta.join(" · ")}</p>
+            <p className="mt-1 text-[12.5px] text-muted">
+              {meta.join("  ·  ")}
+            </p>
           ) : null}
 
-          <div className="mt-4 border-b border-border">
+          <div className="mt-3.5 border-b border-border">
             <ProjectTabs projectId={id} />
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-8">{children}</div>
+      <div className="mx-auto max-w-[1100px] px-4 py-7 sm:px-6 sm:py-8">
+        {children}
+      </div>
     </>
   );
 }

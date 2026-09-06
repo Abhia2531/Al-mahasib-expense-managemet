@@ -4,7 +4,15 @@ import type { Metadata } from "next";
 
 import { getProjectFinancials, listExpenseDays } from "@/lib/queries";
 import { formatDate, formatMoney, todayISO } from "@/lib/format";
-import { btn, Card, EmptyState, SectionHeading, StatTile } from "@/components/ui";
+import {
+  btn,
+  EmptyState,
+  Figures,
+  Icon,
+  icons,
+  Note,
+  SectionHeading,
+} from "@/components/ui";
 
 export async function generateMetadata({
   params,
@@ -25,118 +33,108 @@ export default async function ProjectDashboardPage({
   const project = await getProjectFinancials(id);
   if (!project) notFound();
 
-  const recentDays = (await listExpenseDays(id)).slice(0, 5);
+  const recentDays = (await listExpenseDays(id)).slice(0, 6);
   const today = todayISO();
   const overspent = project.remaining_advance < 0;
 
   return (
-    <div className="space-y-8">
-      {/* ---- Advance & expenses ------------------------------------ */}
-      <section aria-labelledby="advance-heading">
-        <div id="advance-heading">
-          <SectionHeading
-            title="Advance & expenses"
-            description="Money received up front, against what has been spent."
-          />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile label="Project value" value={project.contract_value} />
-          <StatTile
-            label="Total advance received"
-            value={project.total_advance_received}
-          />
-          <StatTile
-            label="Total expenses"
-            value={project.total_expenses}
-            hint={
-              project.expense_days === 1
-                ? "across 1 day"
-                : `across ${project.expense_days} days`
-            }
-          />
-          <StatTile
-            label="Remaining advance"
-            value={project.remaining_advance}
-            tone={overspent ? "neg" : "pos"}
-            hint="Advance − expenses"
-            emphasis
-          />
-        </div>
-
+    <div className="space-y-9">
+      {/* ---- Money -------------------------------------------------- */}
+      <section aria-labelledby="money-heading" className="space-y-3">
+        <SectionHeading
+          id="money-heading"
+          title="Advance & expenses"
+          description="Money received up front against what has been spent."
+        />
+        <Figures
+          items={[
+            { label: "Project value", value: project.contract_value },
+            { label: "Advance received", value: project.total_advance_received },
+            {
+              label: "Total expenses",
+              value: project.total_expenses,
+              hint:
+                project.expense_days === 1
+                  ? "1 day recorded"
+                  : `${project.expense_days} days recorded`,
+            },
+            {
+              label: "Remaining advance",
+              value: project.remaining_advance,
+              hint: "advance − expenses",
+              tone: overspent ? "neg" : "pos",
+              lead: true,
+            },
+          ]}
+        />
         {overspent ? (
-          <p className="mt-3 rounded-lg border border-neg/25 bg-neg-soft px-3.5 py-2.5 text-sm text-neg">
-            Expenses have gone past the advance received by{" "}
-            <span className="tnum font-semibold">
+          <Note tone="neg">
+            Expenses have passed the advance received by{" "}
+            <span className="tnum font-semibold text-neg">
               {formatMoney(Math.abs(project.remaining_advance))}
             </span>
-            . Record another advance payment, or review this project&rsquo;s
-            expenses.
-          </p>
+            . Record another advance, or review this project&rsquo;s expenses.
+          </Note>
         ) : null}
       </section>
 
-      {/* ---- Billing ------------------------------------------------ */}
-      <section aria-labelledby="billing-heading">
-        <div id="billing-heading">
-          <SectionHeading
-            title="Progress billing"
-            description="What has been billed to the client, and what is still owed."
-          />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <StatTile
-            label="Total billed"
-            value={project.total_billed}
-            hint={
-              project.bill_count === 1
-                ? "1 bill raised"
-                : `${project.bill_count} bills raised`
-            }
-          />
-          <StatTile
-            label="Total billing received"
-            value={project.total_billing_received}
-            tone="pos"
-          />
-          <StatTile
-            label="Outstanding billing"
-            value={project.outstanding_billing}
-            tone={project.outstanding_billing > 0 ? "warn" : "neutral"}
-            hint="Billed − received"
-            emphasis
-          />
-        </div>
+      {/* ---- Billing ---------------------------------------------- */}
+      <section aria-labelledby="billing-heading" className="space-y-3">
+        <SectionHeading
+          id="billing-heading"
+          title="Progress billing"
+          description="What has been billed to the client, and what is still owed."
+        />
+        <Figures
+          items={[
+            {
+              label: "Total billed",
+              value: project.total_billed,
+              hint:
+                project.bill_count === 1
+                  ? "1 bill"
+                  : `${project.bill_count} bills`,
+            },
+            { label: "Billing received", value: project.total_billing_received, tone: "pos" },
+            {
+              label: "Outstanding billing",
+              value: project.outstanding_billing,
+              hint: "billed − received",
+              tone: project.outstanding_billing > 0 ? "warn" : "neutral",
+              lead: true,
+            },
+          ]}
+        />
       </section>
 
-      {/* ---- Recent expense days ------------------------------------ */}
-      <section aria-labelledby="recent-heading">
-        <div id="recent-heading">
-          <SectionHeading
-            title="Recent expense days"
-            action={
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href={`/projects/${id}/expenses/${today}`}
-                  className={`${btn.base} ${btn.primary}`}
-                >
-                  Enter today&rsquo;s expenses
-                </Link>
-                <Link
-                  href={`/projects/${id}/expenses`}
-                  className={`${btn.base} ${btn.secondary}`}
-                >
-                  All days
-                </Link>
-              </div>
-            }
-          />
-        </div>
+      {/* ---- Recent days ----------------------------------------- */}
+      <section aria-labelledby="recent-heading" className="space-y-3">
+        <SectionHeading
+          id="recent-heading"
+          title="Recent expense days"
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/projects/${id}/expenses/${today}`}
+                className={`${btn.base} ${btn.primary}`}
+              >
+                Enter today
+              </Link>
+              <Link
+                href={`/projects/${id}/expenses`}
+                className={`${btn.base} ${btn.ghost}`}
+              >
+                All days
+              </Link>
+            </div>
+          }
+        />
 
-        <Card>
+        <div className="overflow-hidden rounded-lg border border-border bg-surface">
           {recentDays.length === 0 ? (
             <EmptyState
               title="No expenses recorded yet"
-              description="Each day gets its own page. Open today's page and start adding materials."
+              description="Each day has its own page. Open today's and start adding materials."
               action={
                 <Link
                   href={`/projects/${id}/expenses/${today}`}
@@ -147,48 +145,48 @@ export default async function ProjectDashboardPage({
               }
             />
           ) : (
-            <ul className="divide-y divide-border">
+            <ul>
               {recentDays.map((day) => (
-                <li key={day.expense_date}>
+                <li key={day.expense_date} className="border-t border-border first:border-t-0">
                   <Link
                     href={`/projects/${id}/expenses/${day.expense_date}`}
-                    className="flex items-center justify-between gap-4 px-4 py-3.5 hover:bg-surface-2"
+                    className="group flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-surface-2"
                   >
                     <span className="min-w-0">
-                      <span className="block text-sm font-medium text-ink">
+                      <span className="text-[13.5px] font-medium text-ink">
                         {formatDate(day.expense_date)}
                         {day.expense_date === today ? (
-                          <span className="ml-2 text-xs font-normal text-accent">
-                            Today
+                          <span className="ml-2 text-[11px] font-medium text-accent">
+                            today
                           </span>
                         ) : null}
                       </span>
-                      <span className="block text-xs text-muted">
-                        {day.line_count}{" "}
-                        {day.line_count === 1 ? "item" : "items"}
+                      <span className="tnum ml-2 text-[12px] text-muted">
+                        {day.line_count} {day.line_count === 1 ? "item" : "items"}
                       </span>
                     </span>
-                    <span className="tnum shrink-0 text-sm font-semibold text-ink">
-                      {formatMoney(day.daily_total)}
+                    <span className="flex items-center gap-2">
+                      <span className="tnum text-[13px] font-semibold text-ink">
+                        {formatMoney(day.daily_total)}
+                      </span>
+                      <span className="text-faint transition-colors group-hover:text-ink-2">
+                        <Icon path={icons.chevronRight} size={14} />
+                      </span>
                     </span>
                   </Link>
                 </li>
               ))}
             </ul>
           )}
-        </Card>
+        </div>
       </section>
 
       {project.description ? (
-        <section aria-labelledby="about-heading">
-          <div id="about-heading">
-            <SectionHeading title="Project description" />
-          </div>
-          <Card className="p-5">
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-2">
-              {project.description}
-            </p>
-          </Card>
+        <section aria-labelledby="about-heading" className="space-y-2">
+          <SectionHeading id="about-heading" title="Project description" />
+          <p className="max-w-prose whitespace-pre-wrap text-[13px] leading-relaxed text-ink-2">
+            {project.description}
+          </p>
         </section>
       ) : null}
     </div>

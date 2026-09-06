@@ -5,7 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { addAdvanceAction, deleteAdvanceAction } from "@/lib/actions";
 import { idleState } from "@/lib/action-state";
 import { formatDate, formatMoney } from "@/lib/format";
-import { btn, Card, ErrorNote, Field, input } from "@/components/ui";
+import { btn, Card, ErrorNote, Field, Icon, icons, input } from "@/components/ui";
 import type { Advance } from "@/lib/types";
 
 export function AdvancesManager({
@@ -20,15 +20,15 @@ export function AdvancesManager({
   const total = advances.reduce((sum, advance) => sum + advance.amount, 0);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-      <Card className="overflow-hidden">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_312px] lg:items-start">
+      <div className="overflow-hidden rounded-lg border border-border bg-surface">
         {advances.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-muted">
+          <p className="px-4 py-10 text-center text-[13px] text-muted">
             No advance payments recorded for this project yet.
           </p>
         ) : (
           <>
-            <ul className="divide-y divide-border">
+            <ul>
               {advances.map((advance) => (
                 <AdvanceRow
                   key={advance.id}
@@ -37,17 +37,17 @@ export function AdvancesManager({
                 />
               ))}
             </ul>
-            <div className="flex items-center justify-between gap-4 border-t-2 border-border-strong bg-accent-soft px-4 py-3.5">
-              <span className="text-sm font-semibold text-ink">
+            <div className="flex items-center justify-between gap-4 border-t-2 border-border-strong px-4 py-3">
+              <span className="text-[13px] font-semibold text-ink">
                 Total advance received
               </span>
-              <span className="tnum text-base font-bold text-ink">
+              <span className="tnum text-[15px] font-bold text-ink">
                 {formatMoney(total)}
               </span>
             </div>
           </>
         )}
-      </Card>
+      </div>
 
       <AddAdvanceForm projectId={projectId} today={today} />
     </div>
@@ -76,19 +76,23 @@ function AdvanceRow({
   }
 
   return (
-    <li className={`px-4 py-3.5 ${isPending ? "opacity-50" : ""}`}>
+    <li
+      className={`border-t border-border px-4 py-3 first:border-t-0 ${
+        isPending ? "opacity-50" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-ink">
+          <p className="text-[13px] font-medium text-ink">
             {formatDate(advance.payment_date)}
           </p>
           {advance.notes ? (
-            <p className="mt-0.5 text-sm text-muted">{advance.notes}</p>
+            <p className="mt-0.5 text-[12px] text-muted">{advance.notes}</p>
           ) : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <span className="tnum text-sm font-semibold text-pos">
+          <span className="tnum text-[13px] font-semibold text-pos">
             {formatMoney(advance.amount)}
           </span>
 
@@ -99,14 +103,14 @@ function AdvanceRow({
               <button
                 type="submit"
                 disabled={isPending}
-                className={`${btn.base} ${btn.danger} ${btn.small} font-semibold`}
+                className={`${btn.base} ${btn.danger} ${btn.sm} font-semibold`}
               >
                 Delete
               </button>
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className={`${btn.base} ${btn.ghost} ${btn.small}`}
+                className={`${btn.base} ${btn.ghost} ${btn.sm}`}
               >
                 Keep
               </button>
@@ -116,20 +120,9 @@ function AdvanceRow({
               type="button"
               onClick={() => setConfirming(true)}
               aria-label={`Delete advance of ${formatMoney(advance.amount)}`}
-              className={`${btn.base} ${btn.danger} ${btn.small}`}
+              className="grid h-7 w-7 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-neg"
             >
-              <svg
-                aria-hidden="true"
-                width="15"
-                height="15"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              >
-                <path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8h5.8l.6-8" />
-              </svg>
+              <Icon size={14} path={icons.trash} />
             </button>
           )}
         </div>
@@ -170,13 +163,13 @@ function AddAdvanceForm({
   }
 
   return (
-    <Card className="p-5">
-      <h3 className="text-[15px] font-semibold text-ink">Record an advance</h3>
-      <p className="mt-1 mb-4 text-sm text-muted">
+    <Card className="p-4">
+      <h3 className="text-[13.5px] font-semibold text-ink">Record an advance</h3>
+      <p className="mt-0.5 mb-3.5 text-[12px] text-muted">
         Added to this project&rsquo;s total advance received.
       </p>
 
-      <form ref={formRef} action={handleAdd} className="space-y-4">
+      <form ref={formRef} action={handleAdd} className="space-y-3.5">
         <input type="hidden" name="project_id" value={projectId} />
 
         <Field htmlFor="advance-amount" label="Amount">

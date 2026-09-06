@@ -4,9 +4,9 @@ import type { Metadata } from "next";
 import { getProjectFinancials, listBills } from "@/lib/queries";
 import { todayISO } from "@/lib/format";
 import { BillingManager } from "@/components/BillingManager";
-import { SectionHeading, StatTile } from "@/components/ui";
+import { Figures, SectionHeading } from "@/components/ui";
 
-export const metadata: Metadata = { title: "Progress billing" };
+export const metadata: Metadata = { title: "Billing" };
 
 export default async function BillingPage({
   params,
@@ -20,35 +20,29 @@ export default async function BillingPage({
   if (!project) notFound();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <SectionHeading
         title="Progress billing"
         description="Bills raised against this project, and what has been received on them."
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatTile
-          label="Total billed"
-          value={project.total_billed}
-          hint={
-            project.bill_count === 1
-              ? "1 bill"
-              : `${project.bill_count} bills`
-          }
-        />
-        <StatTile
-          label="Total billing received"
-          value={project.total_billing_received}
-          tone="pos"
-        />
-        <StatTile
-          label="Outstanding billing"
-          value={project.outstanding_billing}
-          tone={project.outstanding_billing > 0 ? "warn" : "neutral"}
-          hint="Billed − received"
-          emphasis
-        />
-      </div>
+      <Figures
+        items={[
+          {
+            label: "Total billed",
+            value: project.total_billed,
+            hint: project.bill_count === 1 ? "1 bill" : `${project.bill_count} bills`,
+          },
+          { label: "Billing received", value: project.total_billing_received, tone: "pos" },
+          {
+            label: "Outstanding billing",
+            value: project.outstanding_billing,
+            hint: "billed − received",
+            tone: project.outstanding_billing > 0 ? "warn" : "neutral",
+            lead: true,
+          },
+        ]}
+      />
 
       <BillingManager projectId={id} bills={bills} today={todayISO()} />
     </div>

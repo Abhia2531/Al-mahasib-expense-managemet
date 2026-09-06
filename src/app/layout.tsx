@@ -9,7 +9,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   title: {
-    default: "Al Mahasib — Project Finance",
+    default: "Al Mahasib — project finance",
     template: "%s · Al Mahasib",
   },
   description:
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f6f8" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d1117" },
+    { media: "(prefers-color-scheme: light)", color: "#fbfbf9" },
+    { media: "(prefers-color-scheme: dark)", color: "#171613" },
   ],
 };
 
@@ -27,12 +27,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-bg text-ink">
+      <head>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      </head>
+      <body className="flex min-h-full flex-col bg-bg text-ink">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-4 focus:py-2 focus:shadow-lg"
+          className="sr-only rounded-md bg-surface px-4 py-2 text-[13px] font-medium shadow-[var(--shadow-pop)] focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50"
         >
           Skip to content
         </a>
@@ -43,11 +48,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
 
-        <footer className="border-t border-border py-6">
-          <p className="mx-auto max-w-6xl px-4 text-xs text-muted sm:px-6">
-            Al Mahasib Project Finance — every figure is scoped to a single
-            project.
-          </p>
+        <footer className="mt-16 border-t border-border">
+          <div className="mx-auto max-w-[1100px] px-4 py-5 text-[12px] text-faint sm:px-6">
+            Al Mahasib · every figure is scoped to one project
+          </div>
         </footer>
       </body>
     </html>
