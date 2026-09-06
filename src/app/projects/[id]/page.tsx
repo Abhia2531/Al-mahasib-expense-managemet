@@ -30,10 +30,14 @@ export default async function ProjectDashboardPage({
 }: PageProps<"/projects/[id]">) {
   const { id } = await params;
 
-  const project = await getProjectFinancials(id);
+  // Fired together — getProjectFinancials is shared (cached) with the layout.
+  const [project, allDays] = await Promise.all([
+    getProjectFinancials(id),
+    listExpenseDays(id),
+  ]);
   if (!project) notFound();
 
-  const recentDays = (await listExpenseDays(id)).slice(0, 6);
+  const recentDays = allDays.slice(0, 6);
   const today = todayISO();
   const overspent = project.remaining_advance < 0;
 

@@ -18,10 +18,12 @@ function isPublicPath(pathname: string): boolean {
 
 /**
  * Runs on every matched request:
- *  1. Refreshes the Supabase session and writes the rotated cookies onto the
- *     response (this is the only place cookies can be refreshed reliably).
- *  2. Redirects a request with no user to /login (and remembers where they
- *     were heading).
+ *  1. Keeps the Supabase session fresh — `getClaims()` reads the cookie and,
+ *     if the access token is near expiry, refreshes it and writes the rotated
+ *     cookies onto the response. Otherwise it verifies the JWT locally with
+ *     the cached signing key — no network call.
+ *  2. Redirects a request with no valid session to /login (remembering where
+ *     they were heading).
  *  3. Sends an already-signed-in user away from /login.
  */
 export async function updateSession(
@@ -47,11 +49,11 @@ export async function updateSession(
     },
   });
 
-  // getUser() revalidates the token with Supabase — do not trust getSession()
-  // alone in middleware.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the JWT signature locally (with the project's cached
+  // public key), so this is trustworthy without a round-trip to the auth
+  // server. It still triggers a token refresh when one is due.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? data.claims : null;
 
   const { pathname } = request.nextUrl;
 
