@@ -38,7 +38,7 @@ export function ProjectSearch({ initial = "" }: { initial?: string }) {
 
   return (
     <div className="relative w-full sm:max-w-xs">
-      <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-faint">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint">
         <Icon path={icons.search} size={14} />
       </span>
       <input
@@ -49,12 +49,12 @@ export function ProjectSearch({ initial = "" }: { initial?: string }) {
         aria-label="Search projects"
         autoComplete="off"
         spellCheck={false}
-        className="h-9 w-full rounded-md border border-border-strong bg-surface pl-8 pr-8 text-[13px] text-ink placeholder:text-faint outline-none transition-colors focus:border-accent focus:ring-[3px] focus:ring-accent/15"
+        className="h-10 w-full rounded-md border border-border-strong bg-surface pl-9 pr-9 text-sm text-ink placeholder:text-faint outline-none transition-colors focus:border-steel focus:ring-[3px] focus:ring-steel/20"
       />
       {isPending ? (
         <span
           aria-hidden="true"
-          className="absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 animate-spin rounded-full border-2 border-border-strong border-t-accent"
+          className="absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 animate-spin rounded-full border-2 border-border-strong border-t-steel"
         />
       ) : null}
     </div>

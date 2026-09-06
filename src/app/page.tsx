@@ -124,8 +124,8 @@ function ProjectRow({ project }: { project: ProjectFinancials }) {
   ].filter(Boolean);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3.5 transition-colors hover:bg-surface-2">
-      <div className="min-w-[12rem] flex-1">
+    <div className="flex flex-col gap-3 px-4 py-3.5 transition-colors hover:bg-surface-2 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-4">
+      <div className="min-w-0 lg:min-w-[12rem] lg:flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/projects/${project.project_id}`}
@@ -135,12 +135,12 @@ function ProjectRow({ project }: { project: ProjectFinancials }) {
           </Link>
           {overspent ? <Badge tone="neg">Over advance</Badge> : null}
         </div>
-        <p className="mt-0.5 truncate text-[12.5px] text-muted">
+        <p className="mt-0.5 text-[12.5px] text-muted lg:truncate">
           {meta.join("  ·  ")}
         </p>
       </div>
 
-      <dl className="flex shrink-0 items-baseline gap-5 sm:gap-7">
+      <dl className="grid shrink-0 grid-cols-3 gap-x-3 gap-y-1 xs:flex xs:items-baseline xs:gap-5 sm:gap-7">
         <RowFigure
           label="Remaining"
           value={formatMoneyCompact(project.remaining_advance)}
@@ -157,10 +157,10 @@ function ProjectRow({ project }: { project: ProjectFinancials }) {
         />
       </dl>
 
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-2">
         <Link
           href={`/projects/${project.project_id}/edit`}
-          className={`${btn.base} ${btn.secondary} ${btn.sm}`}
+          className={`${btn.base} ${btn.secondary} ${btn.sm} flex-1 justify-center xs:flex-none`}
         >
           <Icon path={icons.edit} size={13} />
           Edit
@@ -168,13 +168,13 @@ function ProjectRow({ project }: { project: ProjectFinancials }) {
         <DeleteProjectDialog
           projectId={project.project_id}
           projectName={project.project_name}
-          triggerClassName={`${btn.base} ${btn.danger} ${btn.sm}`}
+          triggerClassName={`${btn.base} ${btn.danger} ${btn.sm} flex-1 justify-center xs:flex-none`}
           triggerLabel="Delete"
         />
         <Link
           href={`/projects/${project.project_id}`}
           aria-label={`Open ${project.project_name}`}
-          className="grid h-8 w-8 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-ink"
+          className="hidden h-8 w-8 place-items-center rounded-md text-faint transition-colors hover:bg-surface-3 hover:text-ink xs:grid"
         >
           <Icon path={icons.chevronRight} size={15} />
         </Link>
@@ -199,11 +199,11 @@ function RowFigure({
     warn: "text-warn",
   }[tone];
   return (
-    <div className="text-right">
-      <dt className="text-[10.5px] font-semibold uppercase tracking-[0.05em] text-faint">
+    <div className="min-w-0 text-left xs:text-right">
+      <dt className="text-[10px] font-semibold uppercase tracking-[0.04em] text-faint">
         {label}
       </dt>
-      <dd className={`tnum mt-0.5 text-[13px] font-semibold ${toneClass}`}>
+      <dd className={`tnum mt-0.5 truncate text-[12.5px] font-semibold xs:text-[13px] ${toneClass}`}>
         {value}
       </dd>
     </div>

@@ -68,9 +68,9 @@ export function DeleteProjectDialog({
         ref={dialogRef}
         onClose={close}
         onCancel={close}
-        className="m-auto w-[min(30rem,calc(100vw-2rem))] rounded-lg border border-border bg-surface p-0 text-ink shadow-[var(--shadow-pop)] backdrop:bg-black/40 backdrop:backdrop-blur-[1px]"
+        className="m-auto max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface p-0 text-ink shadow-[var(--shadow-pop)] backdrop:bg-black/40 backdrop:backdrop-blur-[1px]"
       >
-        <div className="p-5 sm:p-6">
+        <div className="p-4 xs:p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <span
               aria-hidden="true"
@@ -120,20 +120,20 @@ export function DeleteProjectDialog({
 
             {error ? <ErrorNote>{error}</ErrorNote> : null}
 
-            <div className="flex flex-wrap justify-end gap-2 pt-1">
+            <div className="flex flex-col-reverse gap-2 pt-1 xs:flex-row xs:justify-end">
               <button
                 type="button"
                 onClick={close}
-                className={`${btn.base} ${btn.secondary}`}
+                className={`${btn.base} ${btn.secondary} w-full justify-center xs:w-auto`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!matches || isPending}
-                className={`${btn.base} ${btn.dangerSolid}`}
+                className={`${btn.base} ${btn.dangerSolid} w-full justify-center xs:w-auto`}
               >
-                {isPending ? "Deleting…" : "Delete project permanently"}
+                {isPending ? "Deleting…" : "Delete permanently"}
               </button>
             </div>
           </form>

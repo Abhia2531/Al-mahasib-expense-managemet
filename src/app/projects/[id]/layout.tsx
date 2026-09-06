@@ -57,9 +57,9 @@ export default async function ProjectLayout({
             All projects
           </Link>
 
-          <div className="mt-2 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-x-6">
             <div className="min-w-0">
-              <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink">
+              <h1 className="text-[20px] font-semibold leading-tight tracking-[-0.02em] text-ink xs:text-[22px]">
                 {project.project_name}
               </h1>
               {meta ? (
@@ -67,17 +67,17 @@ export default async function ProjectLayout({
               ) : null}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid shrink-0 grid-cols-2 gap-2 xs:flex xs:flex-wrap xs:items-center">
               <Link
                 href={`/projects/${id}/edit`}
-                className={`${btn.base} ${btn.secondary} ${btn.sm}`}
+                className={`${btn.base} ${btn.secondary} ${btn.sm} w-full justify-center xs:w-auto`}
               >
                 <Icon path={icons.edit} size={14} />
                 Edit project
               </Link>
               <Link
                 href={`/projects/${id}/reports`}
-                className={`${btn.base} ${btn.steel} ${btn.sm}`}
+                className={`${btn.base} ${btn.steel} ${btn.sm} w-full justify-center xs:w-auto`}
               >
                 <Icon path={icons.printer} size={14} />
                 Print report
@@ -86,7 +86,7 @@ export default async function ProjectLayout({
                 projectId={id}
                 projectName={project.project_name}
                 summary={deleteSummary}
-                triggerClassName={`${btn.base} ${btn.danger} ${btn.sm}`}
+                triggerClassName={`${btn.base} ${btn.danger} ${btn.sm} col-span-2 w-full justify-center xs:col-span-1 xs:w-auto`}
               />
             </div>
           </div>

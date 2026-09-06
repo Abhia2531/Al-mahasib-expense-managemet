@@ -15,9 +15,10 @@ import type { DailyExpense } from "@/lib/types";
 /**
  * The Material | Price ledger for one day.
  *
- * Built for repeat entry: the add line stays at the bottom, and after each
- * save it clears and refocuses Material so a whole day can be typed without
- * the mouse.
+ * A responsive list, not a `<table>`: on phones each entry stacks (name on
+ * top, then price + actions); from 640px it's a single aligned row. Built for
+ * repeat entry — the add line stays at the bottom and refocuses Material
+ * after each save.
  */
 export function ExpenseDayTable({
   projectId,
@@ -32,53 +33,38 @@ export function ExpenseDayTable({
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-surface">
-      <table className="w-full text-[13px]">
-        <caption className="sr-only">Materials and prices for this day</caption>
-        <thead>
-          <tr className="text-[11px] font-medium uppercase tracking-[0.05em] text-faint">
-            <th scope="col" className="px-4 py-2 text-left font-medium">
-              Material
-            </th>
-            <th scope="col" className="w-40 px-4 py-2 text-right font-medium">
-              Price
-            </th>
-            <th scope="col" className="w-[8.5rem] px-2 py-2">
-              <span className="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
+      <div
+        aria-hidden="true"
+        className="hidden gap-3 border-b border-border px-4 py-2 text-[11px] font-medium uppercase tracking-[0.05em] text-faint sm:flex"
+      >
+        <span className="flex-1">Material</span>
+        <span className="w-36 text-right">Price</span>
+        <span className="w-[7.5rem]" />
+      </div>
 
-        <tbody>
-          {rows.length === 0 ? (
-            <tr className="border-t border-border">
-              <td colSpan={3} className="px-4 py-7 text-center text-muted">
-                No materials on this day yet — add the first below.
-              </td>
-            </tr>
-          ) : (
-            rows.map((row) => (
-              <ExpenseRow
-                key={row.id}
-                row={row}
-                projectId={projectId}
-                expenseDate={expenseDate}
-              />
-            ))
-          )}
-        </tbody>
+      <ul>
+        {rows.length === 0 ? (
+          <li className="px-4 py-7 text-center text-[13px] text-muted">
+            No materials on this day yet — add the first one below.
+          </li>
+        ) : (
+          rows.map((row) => (
+            <ExpenseRow
+              key={row.id}
+              row={row}
+              projectId={projectId}
+              expenseDate={expenseDate}
+            />
+          ))
+        )}
+      </ul>
 
-        <tfoot>
-          <tr className="border-t-2 border-border-strong">
-            <th scope="row" className="px-4 py-3 text-left text-[13px] font-semibold text-ink">
-              Daily total
-            </th>
-            <td className="tnum px-4 py-3 text-right text-[15px] font-bold text-ink">
-              {formatMoney(dailyTotal)}
-            </td>
-            <td className="px-2" />
-          </tr>
-        </tfoot>
-      </table>
+      <div className="flex items-center justify-between gap-3 border-t-2 border-border-strong px-4 py-3">
+        <span className="text-[13px] font-semibold text-ink">Daily total</span>
+        <span className="tnum text-[15px] font-bold text-ink">
+          {formatMoney(dailyTotal)}
+        </span>
+      </div>
 
       <AddExpenseRow projectId={projectId} expenseDate={expenseDate} />
     </div>
@@ -119,41 +105,39 @@ function ExpenseRow({
 
   if (editing) {
     return (
-      <tr className="border-t border-border bg-surface-2">
-        <td colSpan={3} className="px-3 py-2.5">
-          <form
-            action={(formData) =>
-              runAction(updateExpenseAction, formData, () => setEditing(false))
-            }
-            className="flex flex-wrap items-center gap-2"
-          >
-            <input type="hidden" name="id" value={row.id} />
-            <input type="hidden" name="project_id" value={projectId} />
-            <input type="hidden" name="expense_date" value={expenseDate} />
+      <li className="border-t border-border bg-surface-2 px-3 py-2.5 first:border-t-0">
+        <form
+          action={(formData) =>
+            runAction(updateExpenseAction, formData, () => setEditing(false))
+          }
+          className="flex flex-col gap-2 xs:flex-row xs:flex-wrap xs:items-center"
+        >
+          <input type="hidden" name="id" value={row.id} />
+          <input type="hidden" name="project_id" value={projectId} />
+          <input type="hidden" name="expense_date" value={expenseDate} />
 
-            <input
-              name="material"
-              defaultValue={row.material}
-              required
-              autoFocus
-              aria-label="Material"
-              autoComplete="off"
-              className={`${input} min-w-0 flex-1`}
-            />
-            <div className="w-28 shrink-0">
-              <input
-                name="price"
-                defaultValue={String(row.price)}
-                inputMode="decimal"
-                aria-label="Price"
-                autoComplete="off"
-                className={`${input} tnum text-right`}
-              />
-            </div>
+          <input
+            name="material"
+            defaultValue={row.material}
+            required
+            autoFocus
+            aria-label="Material"
+            autoComplete="off"
+            className={`${input} min-w-0 xs:flex-1`}
+          />
+          <input
+            name="price"
+            defaultValue={String(row.price)}
+            inputMode="decimal"
+            aria-label="Price"
+            autoComplete="off"
+            className={`${input} tnum w-full text-right xs:w-28`}
+          />
+          <div className="flex gap-2">
             <button
               type="submit"
               disabled={isPending}
-              className={`${btn.base} ${btn.primary} ${btn.sm}`}
+              className={`${btn.base} ${btn.primary} ${btn.sm} flex-1 xs:flex-none`}
             >
               {isPending ? "Saving…" : "Save"}
             </button>
@@ -163,38 +147,42 @@ function ExpenseRow({
                 setEditing(false);
                 setError(null);
               }}
-              className={`${btn.base} ${btn.ghost} ${btn.sm}`}
+              className={`${btn.base} ${btn.ghost} ${btn.sm} flex-1 xs:flex-none`}
             >
               Cancel
             </button>
+          </div>
 
-            {error ? (
-              <div className="w-full">
-                <ErrorNote>{error}</ErrorNote>
-              </div>
-            ) : null}
-          </form>
-        </td>
-      </tr>
+          {error ? (
+            <div className="w-full">
+              <ErrorNote>{error}</ErrorNote>
+            </div>
+          ) : null}
+        </form>
+      </li>
     );
   }
 
   return (
-    <tr
-      className={`group border-t border-border transition-colors hover:bg-surface-2 ${
+    <li
+      className={`flex flex-col gap-1.5 border-t border-border px-4 py-3 transition-colors first:border-t-0 hover:bg-surface-2 sm:flex-row sm:items-center sm:gap-3 sm:py-2.5 ${
         isPending ? "opacity-50" : ""
       }`}
     >
-      <td className="px-4 py-2.5 text-ink">{row.material}</td>
-      <td className="tnum px-4 py-2.5 text-right font-medium text-ink">
-        {formatMoney(row.price)}
-      </td>
-      <td className="px-2 py-1.5">
-        <div className="flex items-center justify-end gap-1">
+      <span className="min-w-0 break-words text-[13.5px] text-ink sm:flex-1 sm:text-[13px]">
+        {row.material}
+      </span>
+
+      <div className="flex items-center justify-between gap-3 sm:contents">
+        <span className="tnum text-[14px] font-semibold text-ink sm:w-36 sm:text-right sm:text-[13px] sm:font-medium">
+          {formatMoney(row.price)}
+        </span>
+
+        <div className="flex shrink-0 items-center justify-end gap-1.5 sm:w-[7.5rem]">
           {confirmingDelete ? (
             <form
               action={(formData) => runAction(deleteExpenseAction, formData)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1.5"
             >
               <input type="hidden" name="id" value={row.id} />
               <input type="hidden" name="project_id" value={projectId} />
@@ -219,6 +207,7 @@ function ExpenseRow({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
+                aria-label={`Edit ${row.material}`}
                 className={`${btn.base} ${btn.ghost} ${btn.sm}`}
               >
                 Edit
@@ -226,6 +215,7 @@ function ExpenseRow({
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
+                aria-label={`Delete ${row.material}`}
                 className={`${btn.base} ${btn.danger} ${btn.sm}`}
               >
                 Delete
@@ -233,13 +223,18 @@ function ExpenseRow({
             </>
           )}
         </div>
-        {error && !editing ? (
-          <p role="alert" aria-live="polite" className="mt-1 text-right text-[11.5px] text-neg">
-            {error}
-          </p>
-        ) : null}
-      </td>
-    </tr>
+      </div>
+
+      {error && !confirmingDelete ? (
+        <p
+          role="alert"
+          aria-live="polite"
+          className="text-[11.5px] text-neg sm:w-full sm:text-right"
+        >
+          {error}
+        </p>
+      ) : null}
+    </li>
   );
 }
 
@@ -271,11 +266,11 @@ function AddExpenseRow({
   }
 
   return (
-    <div className="border-t border-border-strong bg-surface-2 px-3 py-2.5">
+    <div className="border-t border-border-strong bg-surface-2 px-3 py-3">
       <form
         ref={formRef}
         action={handleAdd}
-        className="flex flex-wrap items-center gap-2"
+        className="flex flex-col gap-2 xs:flex-row xs:flex-wrap xs:items-center"
       >
         <input type="hidden" name="project_id" value={projectId} />
         <input type="hidden" name="expense_date" value={expenseDate} />
@@ -289,27 +284,25 @@ function AddExpenseRow({
           placeholder="Material — e.g. Cement"
           aria-label="New material"
           autoComplete="off"
-          className={`${input} min-w-0 flex-1 basis-44`}
+          className={`${input} min-w-0 xs:flex-1 xs:basis-44`}
         />
-        <div className="w-28 shrink-0">
-          <input
-            id="new-price"
-            name="price"
-            inputMode="decimal"
-            required
-            placeholder="0"
-            aria-label="Price"
-            autoComplete="off"
-            className={`${input} tnum text-right`}
-          />
-        </div>
+        <input
+          id="new-price"
+          name="price"
+          inputMode="decimal"
+          required
+          placeholder="0"
+          aria-label="Price"
+          autoComplete="off"
+          className={`${input} tnum w-full text-right xs:w-28`}
+        />
         <button
           type="submit"
           disabled={isPending}
-          className={`${btn.base} ${btn.primary} ${btn.sm}`}
+          className={`${btn.base} ${btn.primary} h-10 w-full justify-center px-4 text-sm xs:h-9 xs:w-auto`}
         >
-          <Icon path={icons.plus} size={13} />
-          {isPending ? "Adding…" : "Add"}
+          <Icon path={icons.plus} size={14} />
+          {isPending ? "Adding…" : "Add expense"}
         </button>
       </form>
 

@@ -8,7 +8,7 @@ export function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className={`${btn.base} ${btn.primary}`}
+      className={`${btn.base} ${btn.primary} w-full justify-center sm:w-auto`}
     >
       <Icon path={icons.printer} size={16} />
       Print / Save as PDF

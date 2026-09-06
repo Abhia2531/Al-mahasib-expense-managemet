@@ -46,7 +46,7 @@ export function BillingManager({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className={`${btn.base} ${btn.primary}`}
+            className={`${btn.base} ${btn.primary} w-full justify-center xs:w-auto`}
           >
             <Icon path={icons.plus} size={14} />
             Add bill
@@ -152,7 +152,7 @@ function BillCard({
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1.5">
           {confirming ? (
             <form action={handleDelete} className="flex items-center gap-1">
               <input type="hidden" name="id" value={bill.id} />
@@ -212,7 +212,7 @@ function BillCard({
         </div>
       ) : null}
 
-      <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-3">
+      <dl className="mt-4 grid grid-cols-1 gap-2 border-t border-border pt-3 xs:grid-cols-3 xs:gap-3">
         <BillFigure label="Bill amount" value={formatMoney(bill.bill_amount)} />
         <BillFigure
           label="Received"

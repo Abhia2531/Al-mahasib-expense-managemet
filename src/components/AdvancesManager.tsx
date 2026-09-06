@@ -81,23 +81,25 @@ function AdvanceRow({
         isPending ? "opacity-50" : ""
       }`}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-2 xs:flex-row xs:items-start xs:justify-between xs:gap-4">
         <div className="min-w-0">
           <p className="text-[13px] font-medium text-ink">
             {formatDate(advance.payment_date)}
           </p>
           {advance.notes ? (
-            <p className="mt-0.5 text-[12px] text-muted">{advance.notes}</p>
+            <p className="mt-0.5 break-words text-[12px] text-muted">
+              {advance.notes}
+            </p>
           ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="tnum text-[13px] font-semibold text-pos">
+        <div className="flex shrink-0 items-center justify-between gap-2 xs:justify-end">
+          <span className="tnum text-[14px] font-semibold text-pos xs:text-[13px]">
             {formatMoney(advance.amount)}
           </span>
 
           {confirming ? (
-            <form action={handleDelete} className="flex items-center gap-1">
+            <form action={handleDelete} className="flex items-center gap-1.5">
               <input type="hidden" name="id" value={advance.id} />
               <input type="hidden" name="project_id" value={projectId} />
               <button

@@ -50,7 +50,7 @@ export default async function ExpenseDayPage({
           <h2 className="mt-2 text-[19px] font-semibold tracking-[-0.02em] text-ink">
             {formatDate(date)}
             {date === today ? (
-              <span className="ml-2 align-middle text-[11px] font-medium text-accent">
+              <span className="ml-2 align-middle text-[11px] font-medium text-steel">
                 today
               </span>
             ) : null}

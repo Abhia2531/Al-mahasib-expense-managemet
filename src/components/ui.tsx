@@ -109,8 +109,8 @@ export function SectionHeading({
   id?: string;
 }) {
   return (
-    <div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-      <div>
+    <div className="mb-3 flex flex-col gap-2.5 xs:flex-row xs:flex-wrap xs:items-end xs:justify-between xs:gap-x-4">
+      <div className="min-w-0">
         <h2
           id={id}
           className="text-[16px] font-semibold tracking-[-0.01em] text-ink"
@@ -121,7 +121,11 @@ export function SectionHeading({
           <p className="mt-0.5 text-sm text-muted">{description}</p>
         ) : null}
       </div>
-      {action}
+      {action ? (
+        <div className="flex shrink-0 flex-wrap gap-2 [&>*]:flex-1 xs:[&>*]:flex-none">
+          {action}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -162,15 +166,17 @@ export interface FigureSpec {
  * obvious at a glance.
  */
 export function Figures({ items }: { items: FigureSpec[] }) {
+  // One column on small phones so long money values never wrap or clip;
+  // two from 400px; the full row only where the cells are wide enough.
   const cols =
     items.length === 3
-      ? "sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1"
+      ? "sm:grid-cols-3"
       : items.length === 2
-        ? "sm:grid-cols-2"
-        : "sm:grid-cols-4";
+        ? "xs:grid-cols-2"
+        : "xs:grid-cols-2 lg:grid-cols-4";
   return (
     <dl
-      className={`grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border ${cols}`}
+      className={`grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border ${cols}`}
     >
       {items.map((item) => {
         const tone = item.tone ?? "neutral";
@@ -179,7 +185,7 @@ export function Figures({ items }: { items: FigureSpec[] }) {
         return (
           <div
             key={item.label}
-            className={`px-4 py-4 ${
+            className={`px-4 py-3.5 ${
               item.lead && tone !== "neutral" ? toneFill[tone] : "bg-surface"
             }`}
           >
@@ -188,7 +194,9 @@ export function Figures({ items }: { items: FigureSpec[] }) {
             </dt>
             <dd
               className={`tnum mt-1 font-semibold leading-tight ${
-                item.lead ? "text-[24px]" : "text-[18px]"
+                item.lead
+                  ? "text-[22px] sm:text-[24px]"
+                  : "text-[17px] sm:text-[18px]"
               } ${toneText[tone]}`}
             >
               {display}

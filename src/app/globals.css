@@ -112,6 +112,9 @@
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
 
+  /* a small-phone breakpoint below Tailwind's sm (640px) */
+  --breakpoint-xs: 25rem; /* 400px */
+
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -132,6 +135,9 @@ html {
   color-scheme: light;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  /* safety net — nothing may push the page sideways. `clip` (not `hidden`)
+     keeps position: sticky working. */
+  overflow-x: clip;
 }
 @media (prefers-color-scheme: dark) {
   html {

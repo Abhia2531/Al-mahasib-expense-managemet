@@ -53,10 +53,10 @@ export default async function ReportPage({
   return (
     <div className="space-y-4">
       <div
-        className="flex flex-wrap items-center justify-between gap-3"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         data-noprint
       >
-        <div>
+        <div className="min-w-0">
           <h2 className="text-[16px] font-semibold text-ink">Project report</h2>
           <p className="mt-0.5 text-sm text-muted">
             A4-formatted. Use Print / Save as PDF and choose A4 — the app menus
@@ -73,7 +73,7 @@ export default async function ReportPage({
         </Note>
       ) : null}
 
-      <article className="print-sheet mx-auto max-w-3xl rounded-lg border border-border bg-white p-6 text-[13px] leading-relaxed text-ink shadow-[var(--shadow-sm)] sm:p-8">
+      <article className="print-sheet mx-auto max-w-3xl rounded-lg border border-border bg-white p-4 text-[13px] leading-relaxed text-ink shadow-[var(--shadow-sm)] xs:p-6 sm:p-8">
         <header className="flex items-start justify-between gap-6 border-b-2 border-ink pb-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
@@ -163,31 +163,33 @@ export default async function ReportPage({
               No expenses recorded for this project.
             </p>
           ) : (
-            <table className="mt-2 w-full border-collapse text-[12px]">
-              <thead>
-                <tr className="border-y border-ink text-left">
-                  <th className="w-24 py-1.5 pr-2 font-semibold">Date</th>
-                  <th className="py-1.5 pr-2 font-semibold">Item / material</th>
-                  <th className="w-24 py-1.5 pr-2 font-semibold">Quantity</th>
-                  <th className="w-28 py-1.5 text-right font-semibold">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {byDay.map((day) => (
-                  <DayBlock key={day.date} date={day.date} rows={day.rows} />
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-ink">
-                  <th colSpan={3} className="py-2 text-left font-bold">
-                    Total project expenses
-                  </th>
-                  <td className="tnum py-2 text-right font-bold">
-                    {formatMoney(project.total_expenses)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+            <div className="-mx-1 mt-2 overflow-x-auto px-1 print:mx-0 print:overflow-visible print:px-0">
+              <table className="w-full min-w-[460px] border-collapse text-[12px] print:min-w-0">
+                <thead>
+                  <tr className="border-y border-ink text-left">
+                    <th className="w-20 py-1.5 pr-2 font-semibold">Date</th>
+                    <th className="py-1.5 pr-2 font-semibold">Item / material</th>
+                    <th className="w-20 py-1.5 pr-2 font-semibold">Quantity</th>
+                    <th className="w-24 py-1.5 text-right font-semibold">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {byDay.map((day) => (
+                    <DayBlock key={day.date} date={day.date} rows={day.rows} />
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-ink">
+                    <th colSpan={3} className="py-2 text-left font-bold">
+                      Total project expenses
+                    </th>
+                    <td className="tnum py-2 text-right font-bold">
+                      {formatMoney(project.total_expenses)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           )}
         </section>
 
@@ -198,38 +200,40 @@ export default async function ReportPage({
               No advance payments recorded.
             </p>
           ) : (
-            <table className="mt-2 w-full border-collapse text-[12px]">
-              <thead>
-                <tr className="border-y border-ink text-left">
-                  <th className="w-24 py-1.5 pr-2 font-semibold">Date</th>
-                  <th className="py-1.5 pr-2 font-semibold">Notes</th>
-                  <th className="w-28 py-1.5 text-right font-semibold">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {advances.map((a) => (
-                  <tr key={a.id} className="border-b border-border align-top">
-                    <td className="tnum py-1.5 pr-2">
-                      {formatDate(a.payment_date)}
-                    </td>
-                    <td className="py-1.5 pr-2">{a.notes || "—"}</td>
-                    <td className="tnum py-1.5 text-right">
-                      {formatMoney(a.amount)}
+            <div className="-mx-1 mt-2 overflow-x-auto px-1 print:mx-0 print:overflow-visible print:px-0">
+              <table className="w-full min-w-[420px] border-collapse text-[12px] print:min-w-0">
+                <thead>
+                  <tr className="border-y border-ink text-left">
+                    <th className="w-20 py-1.5 pr-2 font-semibold">Date</th>
+                    <th className="py-1.5 pr-2 font-semibold">Notes</th>
+                    <th className="w-24 py-1.5 text-right font-semibold">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {advances.map((a) => (
+                    <tr key={a.id} className="border-b border-border align-top">
+                      <td className="tnum py-1.5 pr-2">
+                        {formatDate(a.payment_date)}
+                      </td>
+                      <td className="py-1.5 pr-2">{a.notes || "—"}</td>
+                      <td className="tnum py-1.5 text-right">
+                        {formatMoney(a.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-ink">
+                    <th colSpan={2} className="py-2 text-left font-bold">
+                      Total advance received
+                    </th>
+                    <td className="tnum py-2 text-right font-bold">
+                      {formatMoney(project.total_advance_received)}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-ink">
-                  <th colSpan={2} className="py-2 text-left font-bold">
-                    Total advance received
-                  </th>
-                  <td className="tnum py-2 text-right font-bold">
-                    {formatMoney(project.total_advance_received)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+                </tfoot>
+              </table>
+            </div>
           )}
         </section>
 
@@ -240,8 +244,8 @@ export default async function ReportPage({
               No progress bills recorded.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="mt-2 w-full min-w-[560px] border-collapse text-[12px]">
+            <div className="-mx-1 overflow-x-auto px-1 print:mx-0 print:overflow-visible print:px-0">
+              <table className="mt-2 w-full min-w-[560px] border-collapse text-[12px] print:min-w-0">
                 <thead>
                   <tr className="border-y border-ink text-left">
                     <th className="py-1.5 pr-2 font-semibold">Bill</th>

@@ -22,9 +22,9 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   return (
     <nav
       aria-label="Project sections"
-      className="overflow-x-auto border-b border-border"
+      className="overflow-x-auto border-b border-border [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <ul className="flex min-w-max gap-6">
+      <ul className="flex min-w-max gap-5 xs:gap-6">
         {tabs.map((tab) => {
           const active =
             tab.href === base

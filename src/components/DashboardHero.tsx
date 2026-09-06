@@ -39,7 +39,7 @@ export function DashboardHero({
       />
       <svg
         aria-hidden="true"
-        className="pointer-events-none absolute -right-6 -top-8 h-44 w-44 text-brand/[0.07]"
+        className="pointer-events-none absolute -right-6 -top-8 hidden h-44 w-44 text-brand/[0.07] xs:block"
         viewBox="0 0 64 64"
         fill="none"
         stroke="currentColor"
@@ -53,12 +53,12 @@ export function DashboardHero({
         <path d="M32 30V16m-8 0h16M20 52l6-12m18 12-6-12" />
       </svg>
 
-      <div className="relative flex flex-wrap items-end justify-between gap-x-8 gap-y-5 p-5 sm:p-7">
+      <div className="relative flex flex-col justify-between gap-6 p-5 sm:p-7 lg:flex-row lg:items-end lg:gap-x-8">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
             Al Mahasib
           </p>
-          <h1 className="mt-1.5 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[30px]">
+          <h1 className="mt-1.5 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink xs:text-[26px] sm:text-[30px]">
             Construction project finance
           </h1>
           <p className="mt-1.5 max-w-md text-sm text-muted">
@@ -68,7 +68,7 @@ export function DashboardHero({
           <div className="mt-4">
             <Link
               href="/projects/new"
-              className={`${btn.base} ${btn.primary} ${btn.lg}`}
+              className={`${btn.base} ${btn.primary} ${btn.lg} w-full justify-center xs:w-auto`}
             >
               <Icon path={icons.plus} size={16} />
               New project
@@ -77,7 +77,7 @@ export function DashboardHero({
         </div>
 
         {showTotals ? (
-          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border text-right">
+          <dl className="grid w-full grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border text-right lg:w-auto">
             <HeroFigure
               label="Remaining advance"
               value={formatMoneyCompact(totalRemaining)}
@@ -111,11 +111,11 @@ function HeroFigure({
     neutral: "text-ink",
   }[tone];
   return (
-    <div className="min-w-[8.5rem] bg-surface px-4 py-3">
+    <div className="min-w-0 bg-surface px-4 py-3 lg:min-w-[9rem]">
       <dt className="text-[10.5px] font-semibold uppercase tracking-[0.05em] text-faint">
         {label}
       </dt>
-      <dd className={`tnum mt-1 text-[19px] font-semibold ${toneClass}`}>
+      <dd className={`tnum mt-1 text-[17px] font-semibold xs:text-[19px] ${toneClass}`}>
         {value}
       </dd>
       <dd className="text-[10.5px] text-faint">across all projects</dd>

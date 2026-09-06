@@ -117,7 +117,7 @@ export default async function ProjectDashboardPage({
           id="recent-heading"
           title="Recent expense days"
           action={
-            <div className="flex flex-wrap gap-2">
+            <>
               <Link
                 href={`/projects/${id}/expenses/${today}`}
                 className={`${btn.base} ${btn.primary}`}
@@ -126,11 +126,11 @@ export default async function ProjectDashboardPage({
               </Link>
               <Link
                 href={`/projects/${id}/expenses`}
-                className={`${btn.base} ${btn.ghost}`}
+                className={`${btn.base} ${btn.secondary}`}
               >
                 All days
               </Link>
-            </div>
+            </>
           }
         />
 
@@ -160,7 +160,7 @@ export default async function ProjectDashboardPage({
                       <span className="text-[13.5px] font-medium text-ink">
                         {formatDate(day.expense_date)}
                         {day.expense_date === today ? (
-                          <span className="ml-2 text-[11px] font-medium text-accent">
+                          <span className="ml-2 text-[11px] font-medium text-steel">
                             today
                           </span>
                         ) : null}
